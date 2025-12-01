@@ -1,6 +1,8 @@
-{ osConfig, ... }:
+{ inputs, osConfig, ... }:
 {
   imports = [
+    inputs.nix-flatpak.homeManagerModules.nix-flatpak
+
     ../../environments/bareksa/home-manager
     ../../environments/claude-code/home-manager
     ../../shared/home-manager/flatpak/slack.nix
