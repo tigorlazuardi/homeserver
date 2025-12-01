@@ -3,6 +3,7 @@
   imports = [
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
 
+    ../../environments/aldhyaksa/home-manager
     ../../environments/bareksa/home-manager
     ../../environments/claude-code/home-manager
     ../../shared/home-manager/flatpak/slack.nix

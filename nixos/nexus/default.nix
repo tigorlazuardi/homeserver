@@ -16,6 +16,8 @@
     ./steam.nix
     ./sudo.nix
     ./user.nix
+
+    ../environments/aldhyaksa/system.nix
   ];
 
   home-manager = {
