@@ -1,13 +1,15 @@
+{ nixpkgs, ... }@inputs:
+let
+  mkNixosConfiguration =
+    module:
+    nixpkgs.lib.nixosSystem {
+      modules = [
+        module
+        ./shared/modules
+      ];
+      specialArgs = { inherit inputs; };
+    };
+in
 {
-  imports = [
-    ./hardware
-    ./programs
-    ./modules
-    ./services
-
-    ./networking.nix
-    ./locale.nix
-    ./podman.nix
-  ];
+  homeserver = mkNixosConfiguration ./homeserver;
 }
-

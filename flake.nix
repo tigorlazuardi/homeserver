@@ -1,7 +1,7 @@
 {
   inputs = {
     disko = {
-      url = "nix-community/disko";
+      url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -11,13 +11,7 @@
     };
     vscode-server.url = "github:nix-community/nixos-vscode-server";
   };
-  outputs =
-    inputs@{ nixpkgs, ... }:
-    {
-      nixosConfigurations.homeserver = nixpkgs.lib.nixosSystem {
-        modules = [ ./nixos ];
-        specialArgs = { inherit inputs; };
-      };
-    };
+  outputs = inputs: {
+    nixosConfigurations = import ./nixos inputs;
+  };
 }
-
