@@ -1,6 +1,7 @@
 { osConfig, ... }:
 {
   imports = [
+    ../../environments/bareksa/home-manager
     ../../environments/claude-code/home-manager
     ../../shared/home-manager/flatpak/slack.nix
     ../../shared/home-manager/flatpak/vesktop.nix
