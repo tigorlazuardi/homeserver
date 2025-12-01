@@ -8,11 +8,11 @@
   };
   services.desktopManager.plasma6.enable = true;
 
-  # XDG portal for Wayland
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-kde ];
-  };
+  # # XDG portal for Wayland
+  # xdg.portal = {
+  #   enable = true;
+  #   extraPortals = [ pkgs.xdg-desktop-portal-kde ];
+  # };
 
   # Audio with PipeWire
   services.pulseaudio.enable = false;
