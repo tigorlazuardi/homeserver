@@ -135,7 +135,7 @@
             wantedBy = [ "timers.target" ];
           }
         ) autoUpdateContainers;
-        sysetmd.services = mapAttrs' (
+        systemd.services = mapAttrs' (
           name: value:
           nameValuePair "podman-${name}-auto-update" {
             script =
