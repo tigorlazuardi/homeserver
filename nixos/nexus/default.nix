@@ -3,6 +3,9 @@
   imports = [
     inputs.home-manager.nixosModules.home-manager
 
+    ../shared/cli.nix
+    ../shared/git.nix
+
     ./desktop/kde
     ./flatpak.nix
     ./hardware

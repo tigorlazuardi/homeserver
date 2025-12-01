@@ -1,5 +1,8 @@
 {
   imports = [
+    ../shared/cli.nix
+    ../shared/git.nix
+
     ./hardware
     ./programs
     ./services

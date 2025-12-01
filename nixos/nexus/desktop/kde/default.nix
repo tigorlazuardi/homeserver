@@ -33,6 +33,12 @@
     kdePackages.spectacle
     kdePackages.kcalc
     kdePackages.skanpage
+
+    # Archive tools for Dolphin/Ark integration (right-click compress/extract)
+    p7zip
+    unrar
+    zip
+    unzip
   ];
 
   # Enable Bluetooth

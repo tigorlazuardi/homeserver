@@ -3,6 +3,7 @@
     ../../shared/home-manager/flatpak/slack.nix
     ../../shared/home-manager/flatpak/vesktop.nix
     ../../shared/home-manager/flatpak/whatsapp.nix
+    ../../shared/home-manager/git.nix
 
     ./flatpak.nix
   ];
