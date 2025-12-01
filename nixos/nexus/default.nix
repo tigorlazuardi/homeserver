@@ -22,6 +22,7 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     users.tigor = import ./home-manager;
+    extraSpecialArgs = { inherit inputs; };
   };
 
   system.stateVersion = "25.11";
