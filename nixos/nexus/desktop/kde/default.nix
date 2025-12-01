@@ -40,4 +40,10 @@
     enable = true;
     powerOnBoot = true;
   };
+
+  # KDE Discover for Flatpak
+  environment.systemPackages = with pkgs; [
+    kdePackages.discover
+    kdePackages.packagekit-qt
+  ];
 }

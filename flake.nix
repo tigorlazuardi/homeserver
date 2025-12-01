@@ -4,6 +4,7 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
     nixpkgs.url = "nixpkgs/nixos-unstable";
     sops-nix = {
       url = "github:Mic92/sops-nix";
