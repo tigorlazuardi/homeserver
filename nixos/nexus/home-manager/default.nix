@@ -9,6 +9,8 @@
     ../../shared/home-manager/flatpak/vesktop.nix
     ../../shared/home-manager/flatpak/whatsapp.nix
     ../../shared/home-manager/git.nix
+
+    ./vscode.nix
   ];
 
   # KDE Connect indicator in system tray (enabled if NixOS level is enabled)

@@ -1,13 +1,13 @@
 { pkgs, ... }:
 {
   services.flatpak.packages = [
-    "com.github.eneshecan.WhatsAppForLinux"
+    "com.rtosta.zapzap"
   ];
 
-  # Autostart WhatsApp on user login
+  # Autostart Zapzap on user login
   systemd.user.services.whatsapp = {
     Unit = {
-      Description = "WhatsApp for Linux";
+      Description = "Zapzap (WhatsApp Client)";
       After = [ "graphical-session.target" "network-online.target" ];
       Wants = [ "network-online.target" ];
       PartOf = [ "graphical-session.target" ];
@@ -21,7 +21,7 @@
           ${pkgs.coreutils}/bin/sleep 1
         done
       ''}";
-      ExecStart = "${pkgs.flatpak}/bin/flatpak run com.github.eneshecan.WhatsAppForLinux";
+      ExecStart = "${pkgs.flatpak}/bin/flatpak run com.rtosta.zapzap";
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
