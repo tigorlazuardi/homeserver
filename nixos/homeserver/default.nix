@@ -8,4 +8,6 @@
     ./locale.nix
     ./podman.nix
   ];
+
+  system.stateVersion = "25.11";
 }
