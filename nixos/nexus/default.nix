@@ -7,6 +7,8 @@
     ../shared/git.nix
 
     ./desktop/kde
+
+    ./boot.nix
     ./flatpak.nix
     ./hardware
     ./networking.nix
@@ -22,5 +24,5 @@
     users.tigor = import ./home-manager;
   };
 
-  boot.tmp.cleanOnBoot = true;
+  system.stateVersion = "25.11";
 }
