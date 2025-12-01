@@ -7,6 +7,7 @@
     ./flatpak.nix
     ./hardware
     ./networking.nix
+    ./nix-ld.nix
     ./steam.nix
     ./sudo.nix
     ./user.nix
