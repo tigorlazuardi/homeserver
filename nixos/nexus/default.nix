@@ -21,4 +21,6 @@
     useUserPackages = true;
     users.tigor = import ./home-manager;
   };
+
+  boot.tmp.cleanOnBoot = true;
 }

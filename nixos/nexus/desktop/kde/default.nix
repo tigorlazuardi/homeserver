@@ -52,4 +52,7 @@
     kdePackages.discover
     kdePackages.packagekit-qt
   ];
+
+  # KDE Connect for phone integration
+  programs.kdeconnect.enable = true;
 }

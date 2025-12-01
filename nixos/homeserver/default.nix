@@ -14,5 +14,7 @@
     ./user.nix
   ];
 
+  boot.tmp.cleanOnBoot = true;
+
   system.stateVersion = "25.11";
 }
