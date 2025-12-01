@@ -12,4 +12,5 @@ let
 in
 {
   homeserver = mkNixosConfiguration ./homeserver;
+  nexus = mkNixosConfiguration ./nexus;
 }
