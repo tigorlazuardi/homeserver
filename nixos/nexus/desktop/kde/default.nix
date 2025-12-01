@@ -39,6 +39,10 @@
     unrar
     zip
     unzip
+
+    # KDE Discover for Flatpak
+    kdePackages.discover
+    kdePackages.packagekit-qt
   ];
 
   # Enable Bluetooth
@@ -46,12 +50,6 @@
     enable = true;
     powerOnBoot = true;
   };
-
-  # KDE Discover for Flatpak
-  environment.systemPackages = with pkgs; [
-    kdePackages.discover
-    kdePackages.packagekit-qt
-  ];
 
   # KDE Connect for phone integration
   programs.kdeconnect.enable = true;
