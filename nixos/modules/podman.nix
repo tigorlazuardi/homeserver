@@ -43,14 +43,19 @@
                   default = "30s";
                 };
               };
+              autoUpdate =  {
+                enable = mkEnableOption "auto update this container's image on a schedule.";
+                schedule = mkOption {
+                  type = types.str;
+                  default = "daily";
+                  description = "systemd OnCalendar schedule for auto-updates";
+                };
+              };
             };
             config = {
               hostname = mkDefault name;
               networks = mkDefault [ "podman" ];
               autoStart = mkDefault (!config.socketActivation.enable);
-              labels = mkDefault {
-                "io.containers.autoupdate" = "registry";
-              };
               extraOptions = optional (config.ip != null) "--ip=${config.ip}";
             };
           }
@@ -68,90 +73,93 @@
         ;
       cfg = config.virtualisation.oci-containers.containers;
       socketActivatedContainers = filterAttrs (_: c: c.socketActivation.enable) cfg;
+      autoUpdateContainers = filterAttrs (_: c: c.autoUpdate.enable) cfg;
     in
     lib.mkMerge [
-      {
-        systemd.socketActivations = mapAttrs' (
-          name: value:
-          (nameValuePair "podman-${name}" {
-            host = mkIf (assertMsg (value.ip != null)
-              "virtualisation.oci-containers.containers.${name}.ip must not be null to fulfill the conditions to have socketActivation enabled"
-            ) value.ip;
-            port = mkIf (assertMsg (value.httpPort != null)
-              "virtualisation.oci-containers.containers.${name}.httpPort must not be null to fulfill the conditions to have socketActivation enabled"
-            ) value.httpPort;
-            idleTimeout = value.socketActivation.idleTimeout;
-          })
-        ) socketActivatedContainers;
-        virtualisation.podman = {
-          autoPrune.enable = true;
-          defaultNetwork.settings.dns_enabled = true;
-        };
-        networking.firewall.interfaces."podman[0-9]+" = {
-          allowedUDPPorts = [ 53 ]; # this needs to be there so that containers can look eachother's names up over DNS
-        };
-        environment.systemPackages = [
-          (pkgs.writeShellScriptBin "pod-ips" ''
-            sudo podman inspect --format '{{.Name}} - {{.NetworkSettings.IPAddress}}' $(sudo podman ps -q) | sort -t . -k 3,4
-          '')
-        ];
-        security.sudo.extraRules = [
-          {
-            users = [ user.name ];
-            commands = [
-              {
-                command = "/run/current-system/sw/bin/podman";
-                options = [
-                  "SETENV"
-                  "NOPASSWD"
-                ];
-              }
-            ];
-          }
-        ];
-        # Ensure images are pulled for socket activated containers.
-        systemd.services = mapAttrs' (
-          name: value:
-          nameValuePair "podman-${name}-ensure-image" {
-            script =
-              let
-                inherit (pkgs) podman;
-              in
-              # sh
-              ''
-                ${pkgs.waitport}/bin/waitport 600 docker.io 443
-                set -e
-                if ! ${podman}/bin/podman image exists ${value.image}; then
-                  ${podman}/bin/podman pull ${value.image};
-                fi
-              '';
-            unitConfig = {
-              StartLimitIntervalSec = "1h";
-              StartLimitBurst = 5;
-            };
-            serviceConfig = {
-              Type = "simple";
-              RemainAfterExit = true;
-              Restart = "on-failure";
-              RestartSec = 5;
-              RestartSteps = 5;
-              RestartMaxDelaySec = 30;
-            };
-            after = [ "network.target" ];
-            wantedBy = [ "multi-user.target" ];
-          }
-        ) socketActivatedContainers;
-      }
-      {
-        systemd = {
-          timers.podman-auto-update = {
-            description = "Timer to auto update podman containers";
-            timerConfig = {
-              OnCalendar = "daily";
-            };
-            wantedBy = [ "timers.target" ];
+    {
+      systemd.socketActivations = mapAttrs' (
+        name: value:
+        (nameValuePair "podman-${name}" {
+          host = mkIf (assertMsg (value.ip != null)
+            "virtualisation.oci-containers.containers.${name}.ip must not be null to fulfill the conditions to have socketActivation enabled"
+          ) value.ip;
+          port = mkIf (assertMsg (value.httpPort != null)
+            "virtualisation.oci-containers.containers.${name}.httpPort must not be null to fulfill the conditions to have socketActivation enabled"
+          ) value.httpPort;
+          idleTimeout = value.socketActivation.idleTimeout;
+        })
+      ) socketActivatedContainers;
+    }
+    {
+      # Ensure images are pulled for socket activated containers.
+      systemd.services = mapAttrs' (
+        name: value:
+        nameValuePair "podman-${name}-ensure-image" {
+          script =
+            let
+              inherit (pkgs) podman;
+            in
+            # sh
+            ''
+              set -e
+              if ! ${podman}/bin/podman image exists ${value.image}; then
+                ${podman}/bin/podman pull ${value.image};
+              fi
+            '';
+          unitConfig = {
+            StartLimitIntervalSec = "1h";
+            StartLimitBurst = 5;
+          };
+          serviceConfig = {
+            Type = "simple";
+            RemainAfterExit = true;
+            Restart = "on-failure";
+            RestartSec = 5;
+            RestartSteps = 5;
+            RestartMaxDelaySec = 30;
+          };
+          after = [ "network.target" ];
+          wantedBy = [ "multi-user.target" ];
+        }
+      ) socketActivatedContainers;
+    };
+    {
+      systemd.timers = mapAttrs' (
+        name: value:
+        nameValuePair "podman-${name}-auto-update" {
+          description = "Timer to auto update podman container ${name}";
+          timerConfig = {
+            OnCalendar = value.autoUpdate.schedule;
+          };
+          wantedBy = [ "timers.target" ];
+        }
+      ) autoUpdateContainers;
+      systemd.services = mapAttrs' (
+        name: value:
+        nameValuePair "podman-${name}-auto-update" {
+          script =
+            let
+              inherit (pkgs) podman;
+            in
+            # sh
+            ''
+              set -e
+              ${podman}/bin/podman pull ${value.image}
+              systemctl restart podman-${name}.service
+            '';
+          unitConfig = {
+            StartLimitIntervalSec = "1h";
+            StartLimitBurst = 5;
+          };
+          serviceConfig = {
+            Type = "simple";
+            Restart = "on-failure";
+            RestartSec = 5;
+            RestartSteps = 5;
+            RestartMaxDelaySec = 30;  
           };
         };
-      }
+      ) autoUpdateContainers;
+    }
     ];
 }
