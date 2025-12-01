@@ -13,6 +13,7 @@
         mkEnableOption
         mkDefault
         optional
+        hasSuffix
         ;
     in
     mkOption {
@@ -56,6 +57,7 @@
               networks = mkDefault [ "podman" ];
               autoStart = mkDefault (!config.socketActivation.enable);
               extraOptions = optional (config.ip != null) "--ip=${config.ip}";
+              autoUpdate.enable = mkDefault (hasSuffix ":latest" config.image);
             };
           }
         )
