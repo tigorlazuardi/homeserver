@@ -9,8 +9,6 @@ let
     mapAttrs'
     filterAttrs
     nameValuePair
-    assertMsg
-    mkIf
     ;
   cfg = config.virtualisation.oci-containers.containers;
   socketActivatedContainers = filterAttrs (_: c: c.socketActivation.enable) cfg;
@@ -67,3 +65,4 @@ in
     }
   ) socketActivatedContainers;
 }
+

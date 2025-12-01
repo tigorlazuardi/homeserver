@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 {
   programs.neovim = {
     enable = true;
@@ -11,3 +11,4 @@
     LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
   };
 }
+

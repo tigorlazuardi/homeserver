@@ -1,4 +1,4 @@
-{ inputs, ...}:
+{ inputs, ... }:
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -33,15 +33,19 @@
                   mountpoint = "/";
                 };
                 "/home" = {
-                  mountOptions = {
-                    "compress=zstd" "noatime"
-                  };
+                  mountOptions = [
+                    "compress=zstd"
+                    "noatime"
+                  ];
                   mountpoint = "/home";
                 };
-                "/home.snapshots" = {}; # for snapper
+                "/home.snapshots" = { }; # for snapper
                 "/nix" = {
                   mountpoint = "/nix";
-                  mountOptions = [ "compress=zstd" "noatime" ];
+                  mountOptions = [
+                    "compress=zstd"
+                    "noatime"
+                  ];
                 };
                 # application runtime state
                 "/varlib" = {
@@ -51,7 +55,7 @@
                     "noatime"
                   ];
                 };
-                "/varlib/.snapshots" = {};
+                "/varlib/.snapshots" = { };
               };
             };
           };
@@ -79,10 +83,13 @@
               extraArgs = [ "-f" ];
               subvolumes = {
                 "/state" = {
-                  mountOptions = [ "noatime" "compress=zstd" ];
+                  mountOptions = [
+                    "noatime"
+                    "compress=zstd"
+                  ];
                   mountpoint = "/var/mnt/state";
                 };
-                "/state/.snapshots" = {};
+                "/state/.snapshots" = { };
               };
             };
           };
@@ -91,3 +98,4 @@
     };
   };
 }
+
