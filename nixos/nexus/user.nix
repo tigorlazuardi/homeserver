@@ -1,5 +1,8 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
+  imports = [
+    ../shared/fish/system.nix
+  ];
   sops.secrets."users/tigor/password" = {
     neededForUsers = true;
     sopsFile = ../../secrets/users.yaml;
@@ -12,6 +15,7 @@
       "wheel"
       "tigor"
     ];
+    shell = pkgs.fish;
   };
   users.groups.tigor = { };
 }
