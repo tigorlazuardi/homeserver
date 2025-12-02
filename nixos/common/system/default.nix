@@ -7,6 +7,7 @@
     ./fish.nix
     ./git.nix
     ./neovim.nix
+    ./nix.nix
     ./sops.nix
   ];
 }

@@ -25,11 +25,6 @@
     backupFileExtension = "bak";
   };
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
   programs.nix-index-database.comma.enable = true;
 
   nixpkgs.config.allowUnfree = true;
