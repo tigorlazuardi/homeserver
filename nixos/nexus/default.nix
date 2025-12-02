@@ -1,9 +1,6 @@
 { inputs, ... }:
 {
   imports = [
-    inputs.home-manager.nixosModules.home-manager
-    inputs.nix-index-database.nixosModules.nix-index
-
     ./desktop/kde
 
     ./flatpak.nix
@@ -24,8 +21,6 @@
     extraSpecialArgs = { inherit inputs; };
     backupFileExtension = "bak";
   };
-
-  programs.nix-index-database.comma.enable = true;
 
   nixpkgs.config.allowUnfree = true;
   system.stateVersion = "25.11";
