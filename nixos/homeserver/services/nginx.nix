@@ -201,7 +201,7 @@
       security.acme = {
         acceptTerms = true;
         defaults.email = "tigor.hutasuhut@gmail.com";
-        defaults.dnsResolver = "192.168.100.5:53";
+        defaults.dnsResolver = "192.168.100.50:53";
         certs."tigor.web.id" = {
           webroot = "/var/lib/acme/acme-challenge";
           group = "nginx";
@@ -339,4 +339,3 @@
       };
     };
 }
-

@@ -10,4 +10,10 @@
   };
   networking.hostName = "homeserver";
   networking.enableIPv6 = false;
+
+  # Allow binding to low ports without CAP_NET_BIND_SERVICE.
+  #
+  # Since we will run podman containers in homeserver namespace (rootless),
+  # we need this to allow binding to low ports like 80 and 443.
+  boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 0;
 }
