@@ -13,4 +13,5 @@ in
 {
   homeserver = mkNixosConfiguration ./homeserver;
   nexus = mkNixosConfiguration ./nexus;
+  envy = mkNixosConfiguration ./envy;
 }
