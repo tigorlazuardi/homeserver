@@ -1,8 +1,8 @@
 {
   imports = [
-    ./vscode-server.nix
+    ./vscode-server
     ./nginx.nix
     ./webhook.nix
+    ./wireguard.nix
   ];
 }
-
