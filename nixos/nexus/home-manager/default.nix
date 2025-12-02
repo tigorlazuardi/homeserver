@@ -11,6 +11,8 @@
     ../../shared/home-manager/flatpak
     ../../shared/home-manager/git.nix
     ../../shared/home-manager/vscode
+
+    ./ssh.nix
   ];
 
   # KDE Connect indicator in system tray (enabled if NixOS level is enabled)
