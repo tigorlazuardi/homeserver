@@ -17,6 +17,9 @@
       # vim motions
       vscodevim.vim
 
+      # Sops support
+      signageos.signageos-vscode-sops
+
       golang.go
     ];
   };
