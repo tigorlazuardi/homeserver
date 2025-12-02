@@ -1,8 +1,5 @@
 { config, pkgs, ... }:
 {
-  imports = [
-    ../shared/fish/system.nix
-  ];
   sops.secrets."users/tigor/password" = {
     neededForUsers = true;
     sopsFile = ../../secrets/users.yaml;

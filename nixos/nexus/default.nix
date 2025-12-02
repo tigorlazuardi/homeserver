@@ -4,10 +4,6 @@
     inputs.home-manager.nixosModules.home-manager
     inputs.nix-index-database.nixosModules.nix-index
 
-    ../shared/cli.nix
-    ../shared/git.nix
-    ../shared/sops.nix
-
     ./desktop/kde
 
     ./flatpak.nix
