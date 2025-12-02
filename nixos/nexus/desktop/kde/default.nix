@@ -40,9 +40,6 @@
     zip
     unzip
 
-    # KDE Discover for Flatpak
-    kdePackages.discover
-    kdePackages.packagekit-qt
   ];
 
   # Enable Bluetooth

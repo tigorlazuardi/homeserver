@@ -2,6 +2,7 @@
 {
   imports = [
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
+    ./bazaar.nix
     ./bruno.nix
     ./firedragon.nix
     ./jellyfin.nix
