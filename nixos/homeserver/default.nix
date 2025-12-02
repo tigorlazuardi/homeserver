@@ -4,6 +4,8 @@
     ./programs
     ./services
 
+    ../environments/grandboard/system
+
     ./locale.nix
     ./networking.nix
     ./podman.nix

@@ -1,5 +1,6 @@
 { config, pkgs, ... }:
 let
+  image = "ghcr.io/grand-board/umbrella/docs-internal:main";
   name = "grandboard-umbrella-docs-business-internal";
   inherit (config.virtualisation.oci-containers.containers."${name}") ip httpPort;
   tinyauth = {
@@ -13,7 +14,7 @@ in
   };
 
   virtualisation.oci-containers.containers."${name}" = {
-    image = "ghcr.io/grand-board/umbrella/docs-internal:main";
+    inherit image;
     ip = "10.88.21.40";
     httpPort = 3000;
     login = {
