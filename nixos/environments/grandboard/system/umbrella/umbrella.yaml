@@ -1,4 +1,18 @@
-# TODO: Fill and encrypt this
 github:
-  tokens:
-    read_registry: ""
+    tokens:
+        read_registry: ENC[AES256_GCM,data:junACV203ARDgv5jYqvdAFuIV/FGYvtAi06jUi8bpufVfLi66J5uXw==,iv:gR4AtOAg3laqKZ5zLepXIiCq97XKZ3He37oO/CSUuw4=,tag:5FuUtQ38fV3AEekzX/zMFg==,type:str]
+sops:
+    age:
+        - recipient: age1tjtug6ja4pdadescfw0kkyvrn96dy6325v5p6gxx4g7z2d9cxqgs899653
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBTbUY0SFp0Rkw4RThybllv
+            eXoxcXIzNTVoc0Z5M1ZRdnNHTHZWZStJWXpBCjA5L1ZMWDUyUW9qd3Fjb2wrTnBR
+            ZmtzdnhmWGRheUwybUM5ZENqUk53dUEKLS0tIHNJWmJqa3cyeHQ4NkIzclJNSktt
+            cDJGT1Evc2NVZXM0RFNUUk51NFE0eVkKTPxKf1Ofi537eM9BGQjXR/hTA1VOqiZo
+            IZNrRvj/WnbI2SMBhAnO4D+xEuSx6Chb/bVv/l9H1Y3fbS+SKQJbKw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-12-02T14:20:48Z"
+    mac: ENC[AES256_GCM,data:/HXwDR4FhyHiiVoccMKfaj2AyhQo+KQsoXpL6QiWAIfU6JoIQrkh16m0Fa5Rxn5w5dhja0Fb/yhWtSLgwd0jEg54vIVkzklfADMCc4Ik9nYoFbDxj1EdjaSX2ZDGzsPgi4UDxL6O1WdYksvIgXXBLPtPIjbaThJgC5IsjUL57DY=,iv:Ir8+srM4d/1jSn8eXR8nhejvbkdwyHHO2FrWFi3b+fw=,tag:UC6d1MtDObQuZyaXLVTOUw==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.11.0
