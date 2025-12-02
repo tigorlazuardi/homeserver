@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   imports = [
     ./desktop/kde
@@ -21,6 +21,10 @@
     extraSpecialArgs = { inherit inputs; };
     backupFileExtension = "bak";
   };
+
+  environment.systemPackages = with pkgs; [
+    wl-clipboard
+  ];
 
   nixpkgs.config.allowUnfree = true;
   system.stateVersion = "25.11";

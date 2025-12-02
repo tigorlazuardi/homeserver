@@ -7,6 +7,7 @@
 
   users.users.tigor = {
     isNormalUser = true;
+    description = "Tigor Hutasuhut";
     hashedPasswordFile = config.sops.secrets."users/tigor/password".path;
     extraGroups = [
       "wheel"
