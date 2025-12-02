@@ -12,7 +12,6 @@
       "homeserver"
     ];
     shell = pkgs.fish;
-    linger = true; # Allow user services to run when not logged in
   };
   users.groups.homeserver = { };
 }
