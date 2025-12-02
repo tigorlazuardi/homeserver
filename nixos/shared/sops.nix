@@ -1,5 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
+  imports = [
+    inputs.sops-nix.nixosModules.sops
+  ];
   environment.systemPackages = with pkgs; [
     sops
     age
@@ -14,6 +17,8 @@
   #
   # Also use /opt so no conflicts with /etc or /var
   #
-  # Also ensure the file is readable by the user (for creating/editing secrets) and only by root
+  # Also ensure the file is readable by the user (for creating/editing secrets) and only by root.
+  #
+  # On nixos installation, you can place the key here manually to install with secrets available.
   sops.age.keyFile = "/opt/age-key.txt";
 }

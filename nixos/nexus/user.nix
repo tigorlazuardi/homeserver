@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   sops.secrets."users/tigor/password" = {
     neededForUsers = true;
@@ -6,7 +7,7 @@
 
   users.users.tigor = {
     isNormalUser = true;
-    initialPassword = "ganti"; # ganti dengan passwd
+    hashedPasswordFile = config.sops.secrets."users/tigor/password".path;
     extraGroups = [
       "wheel"
       "tigor"

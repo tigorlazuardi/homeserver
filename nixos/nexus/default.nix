@@ -2,11 +2,11 @@
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
-    inputs.sops-nix.nixosModules.sops
     inputs.nix-index-database.nixosModules.nix-index
 
     ../shared/cli.nix
     ../shared/git.nix
+    ../shared/sops.nix
 
     ./desktop/kde
 
@@ -16,7 +16,6 @@
     ./networking.nix
     ./nix-ld.nix
     ./steam.nix
-    ./sops.nix
     ./sudo.nix
     ./user.nix
 
