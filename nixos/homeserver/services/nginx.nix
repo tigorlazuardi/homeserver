@@ -222,7 +222,8 @@
 
       # Alloy configuration for nginx log scraping
       environment.etc."alloy/nginx-logs.alloy".text =
-        lib.mkIf config.services.alloy.enable
+        with lib;
+        optionalString config.services.alloy.enable
           #hocon
           ''
             loki.source.file "nginx_access" {
@@ -332,10 +333,10 @@
               forward_to = [otelcol.receiver.loki.default.receiver]
             }
           '';
-      services.homepage-dashboard.groups.Networking.services.NGINX.settings = {
-        description = "Reverse Proxy and TLS termination for all services";
-        href = "https://tigor.web.id";
-        icon = "nginx.svg";
-      };
+      # services.homepage-dashboard.groups.Networking.services.NGINX.settings = {
+      #   description = "Reverse Proxy and TLS termination for all services";
+      #   href = "https://tigor.web.id";
+      #   icon = "nginx.svg";
+      # };
     };
 }
