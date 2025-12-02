@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ inputs, ... }:
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
@@ -10,7 +10,6 @@
 
     ./desktop/kde
 
-    ./boot.nix
     ./flatpak.nix
     ./hardware
     ./networking.nix

@@ -5,7 +5,7 @@ let
     nixpkgs.lib.nixosSystem {
       modules = [
         module
-        ./shared/modules
+        ./common
       ];
       specialArgs = { inherit inputs; };
     };

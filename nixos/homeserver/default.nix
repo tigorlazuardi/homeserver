@@ -1,13 +1,9 @@
 {
   imports = [
-    ../shared/cli.nix
-    ../shared/git.nix
-
     ./hardware
     ./programs
     ./services
 
-    ./boot.nix
     ./locale.nix
     ./networking.nix
     ./podman.nix
