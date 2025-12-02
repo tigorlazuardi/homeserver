@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.vscode = {
     enable = true;
@@ -17,6 +17,10 @@
       # vim motions
       vscodevim.vim
 
+      golang.go
     ];
   };
+
+  xdg.configFile."Code/User/settings.json".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/nixos/shared/home-manager/vscode/settings.json";
 }

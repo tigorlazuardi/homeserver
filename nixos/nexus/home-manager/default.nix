@@ -1,4 +1,9 @@
-{ inputs, osConfig, ... }:
+{
+  inputs,
+  osConfig,
+  config,
+  ...
+}:
 {
   imports = [
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
@@ -10,8 +15,7 @@
     ../../shared/home-manager/flatpak/vesktop.nix
     ../../shared/home-manager/flatpak/whatsapp.nix
     ../../shared/home-manager/git.nix
-
-    ./vscode.nix
+    ../../shared/home-manager/vscode
   ];
 
   # KDE Connect indicator in system tray (enabled if NixOS level is enabled)
@@ -21,4 +25,6 @@
   };
 
   home.stateVersion = "25.11";
+  home.username = "tigor";
+  home.homeDirectory = "/home/tigor";
 }

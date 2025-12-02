@@ -1,0 +1,20 @@
+{
+    "workbench.iconTheme": "catppuccin-mocha",
+    "workbench.colorTheme": "Catppuccin Mocha",
+    "claudeCode.preferredLocation": "panel",
+    "workbench.secondarySideBar.defaultVisibility": "visible",
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "git.confirmSync": false,
+    "terminal.integrated.suggest.enabled": true,
+    "editor.formatOnSave": true,
+    "go.editorContextMenuCommands": {
+        "fillStruct": true,
+        "testFile": true,
+        "testPackage": true,
+        "generateTestForFile": true,
+        "generateTestForPackage": true,
+        "benchmarkAtCursor": true
+    },
+    "go.inlayHints.parameterNames": true,
+    "editor.formatOnPaste": true,
+}

@@ -27,6 +27,7 @@
     useUserPackages = true;
     users.tigor = import ./home-manager;
     extraSpecialArgs = { inherit inputs; };
+    backupFileExtension = "bak";
   };
 
   nix.settings.experimental-features = [
