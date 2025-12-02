@@ -1,0 +1,2 @@
+- scope untuk configurasi pasti didalam nixos folder. Ketika membuat file atau folder untuk mengisi code nix, pastikan di dalam folder ini
+- secrets ada di folder <root-repo>/secrets, encrypted menggunakan sops dan key age. Bisa di decrypt kalau ada keynya di /opt/age-key.txt. Bisa di encrypt tanpa perlu /opt/age-key.txt dengan command sops encrypt [-i untuk in-place].
