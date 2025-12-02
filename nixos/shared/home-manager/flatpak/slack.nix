@@ -8,7 +8,10 @@
   systemd.user.services.slack = {
     Unit = {
       Description = "Slack";
-      After = [ "graphical-session.target" "network-online.target" ];
+      After = [
+        "graphical-session.target"
+        "network-online.target"
+      ];
       Wants = [ "network-online.target" ];
       PartOf = [ "graphical-session.target" ];
     };
@@ -30,11 +33,9 @@
       Description = "Start Slack during work hours (Mon-Fri 08:00-18:00)";
       PartOf = [ "graphical-session.target" ];
       After = [ "graphical-session.target" ];
-      ConditionCalendar = "Mon..Fri 08:00..18:00";
     };
     Timer = {
-      OnStartupSec = "5s";
-      OnCalendar = "Mon..Fri 08:00";
+      OnCalendar = "Mon..Fri *-*-* 08..18:00:00";
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
