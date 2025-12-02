@@ -3,15 +3,34 @@
 # Config is generated from Nix but only copied if not exists,
 # allowing manual edits via UI to persist.
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   # Server IP for DNS rewrites
   serverIP = "192.168.100.50";
 
   # Wildcard DNS rewrites for tigor.web.id
   dnsRewrites = [
-    { domain = "tigor.web.id"; answer = serverIP; }
-    { domain = "*.tigor.web.id"; answer = serverIP; }
+    {
+      domain = "tigor.web.id";
+      answer = serverIP;
+    }
+    {
+      domain = "*.tigor.web.id";
+      answer = serverIP;
+    }
+    {
+      domain = "grandboard.web.id";
+      answer = serverIP;
+    }
+    {
+      domain = "*.grandboard.web.id";
+      answer = serverIP;
+    }
   ];
 
   # AdGuard Home initial config
@@ -46,8 +65,10 @@ let
         "https://cloudflare-dns.com/dns-query"
       ];
       bootstrap_dns = [
-        "94.140.14.14"
-        "94.140.15.15"
+        "94.140.14.14" # AdGuard
+        "94.140.15.15" # AdGuard
+        "1.1.1.1" # Cloudflare
+        "8.8.8.8" # Google
       ];
       # DNS rewrites generated from nginx virtualHosts
       rewrites = dnsRewrites;
@@ -154,11 +175,11 @@ in
   # Open firewall for DNS and web UI
   networking.firewall = {
     allowedTCPPorts = [
-      53    # DNS TCP
-      3000  # Web UI
+      53 # DNS TCP
+      3000 # Web UI
     ];
     allowedUDPPorts = [
-      53    # DNS UDP
+      53 # DNS UDP
     ];
   };
 }
