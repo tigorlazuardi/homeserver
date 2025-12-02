@@ -17,4 +17,5 @@
     },
     "go.inlayHints.parameterNames": true,
     "editor.formatOnPaste": true,
+    "sops-edit.onlyUseButtons": true,
 }
