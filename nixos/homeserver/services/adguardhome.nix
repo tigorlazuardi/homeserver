@@ -1,22 +1,18 @@
-# AdGuard Home DNS server with auto-generated DNS rewrites from nginx virtualHosts
+# AdGuard Home DNS server with wildcard DNS rewrites for tigor.web.id
 #
 # Config is generated from Nix but only copied if not exists,
 # allowing manual edits via UI to persist.
 
 { config, lib, pkgs, ... }:
 let
-  # Extract all domains from nginx virtualHosts
-  nginxHosts = config.services.nginx.virtualHosts;
-  domains = builtins.attrNames nginxHosts;
-
   # Server IP for DNS rewrites
   serverIP = "192.168.100.50";
 
-  # Generate DNS rewrites from nginx domains
-  dnsRewrites = map (domain: {
-    domain = domain;
-    answer = serverIP;
-  }) domains;
+  # Wildcard DNS rewrites for tigor.web.id
+  dnsRewrites = [
+    { domain = "tigor.web.id"; answer = serverIP; }
+    { domain = "*.tigor.web.id"; answer = serverIP; }
+  ];
 
   # AdGuard Home initial config
   adguardConfig = {
