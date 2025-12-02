@@ -1,0 +1,19 @@
+{ pkgs, ... }:
+{
+  environment.systemPackages = with pkgs; [
+    sops
+    age
+  ];
+  environment.variables = {
+    SOPS_AGE_KEY_FILE = "/opt/age-key.txt";
+  };
+  # This has to point to a filesystem that is mounted early, e.g. root filesystem so
+  # the secrets can be decrypted during boot.
+  #
+  # Do not use $HOME/.config/sops/age/key.txt or similar paths that depend on user home directories.
+  #
+  # Also use /opt so no conflicts with /etc or /var
+  #
+  # Also ensure the file is readable by the user (for creating/editing secrets) and only by root
+  sops.age.keyFile = "/opt/age-key.txt";
+}

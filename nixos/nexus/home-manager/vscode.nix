@@ -16,6 +16,7 @@
 
       # vim motions
       vscodevim.vim
+
     ];
   };
 }
