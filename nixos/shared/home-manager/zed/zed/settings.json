@@ -1,0 +1,42 @@
+{
+  "ssh_connections": [
+    {
+      "host": "Homeserver",
+      "args": [],
+      "projects": [
+        {
+          "paths": ["/home/homeserver"]
+        }
+      ]
+    }
+  ],
+  "icon_theme": "Catppuccin Mocha",
+  "base_keymap": "VSCode",
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "Catppuccin Macchiato (Blur) [Light]"
+  },
+  "vim_mode": true,
+  "auto_install_extensions": {
+    "catppuccin-blur": true,
+    "catppuccin-icons": true,
+    "comment": true,
+    "dbml": true,
+    "emmet": true,
+    "fish": true,
+    "gitlab-ci-ls": true,
+    "go": true,
+    "hocon": true,
+    "http": true,
+    "json5": true,
+    "jsonl": true,
+    "live-server": true,
+    "lua": true,
+    "make": true,
+    "nix": true,
+    "tsgo": true,
+    "docker": true,
+    "toml": true
+  }
+}

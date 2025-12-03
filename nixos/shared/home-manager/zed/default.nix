@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.zed-editor = {
     enable = true;
@@ -26,5 +26,11 @@
     installRemoteServer = true;
   };
 
-  home.packages = with pkgs; [ nixd ];
+  home.packages = with pkgs; [
+    nixd
+    zed-editor
+  ];
+
+  xdg.configFile."zed".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/nixos/shared/home-manager/zed/zed";
 }
