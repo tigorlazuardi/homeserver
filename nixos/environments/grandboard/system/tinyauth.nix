@@ -1,6 +1,8 @@
 { config, ... }:
 let
   domain = "auth.grandboard.web.id";
+  name = "grandboard-tinyauth";
+  inherit (config.virtualisation.oci-containers.containers."${name}") ip httpPort;
 in
 {
   sops.secrets."grandboard/tinyauth.env" = {
@@ -8,7 +10,7 @@ in
     format = "dotenv";
     key = "";
   };
-  virtualisation.oci-containers.containers.grandboard-tinyauth = {
+  virtualisation.oci-containers.containers."${name}" = {
     image = "ghcr.io/steveiliop56/tinyauth:v4";
     ip = "10.88.11.3";
     httpPort = 3000;
@@ -27,4 +29,9 @@ in
   systemd.services."podman-grandboard-tinyauth".preStart = ''
     mkdir -p /var/mnt/state/grandboard/tinyauth/data
   '';
+  services.nginx.virtualHosts."${domain}" = {
+	forceSSL = true;
+	useACMEHost = "grandboard.web.id";
+	locations."/".proxyPass = "http://${ip}:${toString httpPort}";
+  };
 }
