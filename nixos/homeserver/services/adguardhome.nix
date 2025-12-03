@@ -273,7 +273,7 @@ in
   virtualisation.oci-containers.containers.${containerName} = {
     image = "adguard/adguardhome:latest";
     autoStart = true;
-    networks = lib.mkForce ["host"];
+    networks = lib.mkForce [ "host" ];
     volumes = [
       "${dataDir}/work:/opt/adguardhome/work"
       "${dataDir}/conf:/opt/adguardhome/conf"
@@ -290,6 +290,10 @@ in
         chmod 644 ${dataDir}/conf/AdGuardHome.yaml
       fi
     '';
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5s";
+    };
   };
 
   # Open firewall for DNS and web UI
