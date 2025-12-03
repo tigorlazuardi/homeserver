@@ -7,5 +7,6 @@
     ./pocket-id.nix
     ./webhook.nix
     ./wireguard.nix
+    ./openssh.nix
   ];
 }
