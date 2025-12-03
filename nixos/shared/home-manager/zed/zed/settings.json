@@ -5,7 +5,9 @@
       "args": [],
       "projects": [
         {
-          "paths": ["/home/homeserver"]
+          "paths": [
+            "/home/homeserver"
+          ]
         }
       ]
     }

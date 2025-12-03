@@ -1,3 +1,4 @@
+{ inputs, ... }:
 {
   imports = [
     ./hardware
@@ -12,6 +13,14 @@
     ./sudo.nix
     ./user.nix
   ];
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.homeserver = import ./home-manager;
+    extraSpecialArgs = { inherit inputs; };
+    backupFileExtension = "bak";
+  };
 
   system.stateVersion = "25.11";
 }
