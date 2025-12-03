@@ -2,7 +2,7 @@
     "workbench.iconTheme": "catppuccin-mocha",
     "workbench.colorTheme": "Catppuccin Mocha",
     "claudeCode.preferredLocation": "panel",
-    "workbench.secondarySideBar.defaultVisibility": "visible",
+    "workbench.secondarySideBar.defaultVisibility": "hidden",
     "github.copilot.nextEditSuggestions.enabled": true,
     "git.confirmSync": false,
     "terminal.integrated.suggest.enabled": true,
@@ -19,4 +19,9 @@
     "editor.formatOnPaste": true,
     "sops-edit.onlyUseButtons": true,
     "git.enableSmartCommit": true,
+    "remote.SSH.useLocalServer": false,
+    "remote.SSH.remotePlatform": {
+        "Homeserver": "linux"
+    },
+    "git.autofetch": true
 }

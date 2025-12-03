@@ -4,6 +4,7 @@
 
     ./boot.nix
     ./cli.nix
+    ./direnv.nix
     ./fish.nix
     ./git.nix
     ./neovim.nix

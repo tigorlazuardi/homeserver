@@ -12,6 +12,7 @@
     ./user.nix
 
     ../environments/aldhyaksa/system.nix
+    ../environments/bareksa/system
   ];
 
   home-manager = {
