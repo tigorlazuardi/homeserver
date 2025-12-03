@@ -1,7 +1,6 @@
 {
   # Unless we have multiple network cards, we don't need this to be true.
   networking.usePredictableInterfaceNames = false;
-  networking.useNetworkd = true;
 
   users.users.homeserver = {
     openssh.authorizedKeys.keys = [
@@ -10,21 +9,9 @@
     ];
   };
 
-  systemd.network = {
-    enable = true;
-    networks."25-wired" = {
-      matchConfig.Name = "eth0";
-      networkConfig.DHCP = "ipv4";
-      linkConfig.RequiredForOnline = "routable";
-    };
-  };
+  # Use scripted networking (DHCP via dhcpcd)
+  networking.interfaces.eth0.useDHCP = true;
 
   networking.hostName = "homeserver";
   networking.enableIPv6 = false;
-
-  # Allow binding to low ports without CAP_NET_BIND_SERVICE.
-  #
-  # Since we will run podman containers in homeserver namespace (rootless),
-  # we need this to allow binding to low ports like 80 and 443.
-  boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 0;
 }
