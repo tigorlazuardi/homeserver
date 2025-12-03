@@ -5,9 +5,9 @@
   ];
   services.vscode-server.enable = true;
   # nix-ld: Run unpatched dynamic binaries (e.g. downloaded binaries, VSCode extensions)
-  # programs.nix-ld.enable = true;
+  programs.nix-ld.enable = true;
 
   # envfs: Provides /usr/bin/env and other paths expected by scripts
-  # services.envfs.enable = true;
+  services.envfs.enable = true;
 
 }
