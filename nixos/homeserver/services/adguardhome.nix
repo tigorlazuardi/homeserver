@@ -272,10 +272,7 @@ in
   virtualisation.oci-containers.containers.${containerName} = {
     image = "adguard/adguardhome:latest";
     autoStart = true;
-    extraOptions = [
-      "--network=host" # Use host network for DNS binding
-      "--pull=newer" # Auto-update image
-    ];
+    networks = lib.mkForce ["host"];
     volumes = [
       "${dataDir}/work:/opt/adguardhome/work"
       "${dataDir}/conf:/opt/adguardhome/conf"
