@@ -24,7 +24,7 @@ in
       "/var/mnt/state/grandboard/tinyauth/data:/data"
     ];
   };
-  systemd.services."podman-grabdboard-tinyauth".preStart = ''
+  systemd.services."podman-grandboard-tinyauth".preStart = ''
     mkdir -p /var/mnt/state/grandboard/tinyauth/data
   '';
 }
