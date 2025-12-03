@@ -55,6 +55,7 @@
       ];
       services.nginx = {
         enable = true;
+	serverNamesHashBucketSize = 256;
         # This option sets ssl_stapling which is removed by let's encrypt.
         # See https://forum.hestiacp.com/t/ssl-stapling-ignored-no-ocsp-responder-url-in-the-certificate/18944/4
         #

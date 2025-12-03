@@ -1,8 +1,7 @@
 {
   imports = [
-    ./umbrella
-
-    ./nginx.nix
-    ./tinyauth.nix
+	./umbrella
+      ./nginx.nix
+      ./tinyauth.nix
   ];
 }
