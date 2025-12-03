@@ -21,7 +21,7 @@ let
     }
   ];
   serverPublicKey = config.sops.placeholder."wireguard/server/public_key";
-  endpoint = "wireguard.tigor.web.id:51820";
+  endpoint = "103.156.119.209:51820";
   dns = "10.0.0.1"; # AdGuard Home on WireGuard gateway
 in
 {
