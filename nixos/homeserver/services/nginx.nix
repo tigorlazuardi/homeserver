@@ -194,7 +194,9 @@
               listen 0.0.0.0:443 ssl default_server;
               listen [::0]:443 ssl default_server;
               server_name _;
-              ssl_reject_handshake on; # Reject SSL connection 
+              ssl_certificate /var/lib/acme/tigor.web.id/fullchain.pem;
+              ssl_certificate_key /var/lib/acme/tigor.web.id/key.pem;
+              ssl_reject_handshake on; # Reject SSL connection
               return 444;
           }
         '';
