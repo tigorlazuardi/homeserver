@@ -63,7 +63,7 @@ in
                 locations =
                   optionalAttrs (config.tinyauth.enable) {
                     "/tinyauth" = {
-                      proxyPass = "${APP_URL}/api/auth/nginx";
+                      proxyPass = "http://${ip}:${toString httpPort}/api/auth/nginx";
                       extraConfig =
                         # nginx
                         ''
