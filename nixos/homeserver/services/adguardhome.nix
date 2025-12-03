@@ -5,6 +5,7 @@
 
 {
   pkgs,
+  lib,
   ...
 }:
 let
