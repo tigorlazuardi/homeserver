@@ -3,8 +3,8 @@
     ./vscode-server
 
     ./adguardhome.nix
+    ./auth.nix
     ./nginx.nix
-    ./pocket-id.nix
     ./webhook.nix
     ./wireguard.nix
     ./openssh.nix

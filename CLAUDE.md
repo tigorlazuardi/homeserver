@@ -60,3 +60,6 @@ nixos/
 - All Nix configuration files must be in `nixos/` directory
 - Flatpak apps are managed declaratively via nix-flatpak in `shared/home-manager/flatpak/`
 - Hardware configs include disko for declarative disk partitioning
+
+- ketika ada secrets belum di encrypt, dan mau di git commit, ini harus offer untuk encrypt menggunakan command sops encrypt atau fail ke user.
+- secret boleh di decrypt tapi harus explicit permission user
