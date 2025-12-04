@@ -8,5 +8,6 @@
     ./webhook.nix
     ./wireguard.nix
     ./openssh.nix
+    ./lms.nix
   ];
 }
