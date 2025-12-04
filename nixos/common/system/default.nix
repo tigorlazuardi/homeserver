@@ -1,3 +1,4 @@
+{ lib, ... }:
 {
   imports = [
     ./modules
@@ -11,4 +12,6 @@
     ./nix.nix
     ./sops.nix
   ];
+
+  time.timeZone = lib.mkDefault "Asia/Jakarta";
 }

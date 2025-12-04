@@ -13,7 +13,9 @@
       "args": [],
       "projects": [
         {
-          "paths": ["/home/homeserver/dotfiles"]
+          "paths": [
+            "/home/homeserver/dotfiles"
+          ]
         }
       ]
     }
