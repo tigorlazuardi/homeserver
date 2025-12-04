@@ -9,6 +9,5 @@
     ./wireguard.nix
     ./openssh.nix
     ./navidrome.nix
-    # ./lms.nix
   ];
 }
