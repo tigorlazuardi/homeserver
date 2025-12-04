@@ -1,23 +1,33 @@
 {
+  "agent_servers": {
+    "claude": {
+      "default_mode": "bypassPermissions"
+    }
+  },
+  "completions": {
+    "words": "disabled"
+  },
   "ssh_connections": [
     {
       "host": "Homeserver",
       "args": [],
       "projects": [
         {
-          "paths": [
-            "/home/homeserver"
-          ]
+          "paths": ["/home/homeserver/dotfiles"]
         }
       ]
     }
   ],
+  "load_direnv": "shell_hook",
+  "features": {
+    "edit_prediction_provider": "copilot"
+  },
   "icon_theme": "Catppuccin Mocha",
   "base_keymap": "VSCode",
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "Catppuccin Macchiato (Blur) [Light]"
+    "dark": "Catppuccin Espresso (Blur) [Light]"
   },
   "vim_mode": true,
   "auto_install_extensions": {
@@ -39,6 +49,7 @@
     "nix": true,
     "tsgo": true,
     "docker": true,
-    "toml": true
+    "toml": true,
+    "dockerfile": true
   }
 }
