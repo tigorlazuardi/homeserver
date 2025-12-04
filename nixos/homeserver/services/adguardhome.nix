@@ -296,6 +296,12 @@ in
     };
   };
 
+  services.nginx.virtualHosts."adguard.tigor.web.id" = {
+    forceSSL = true;
+    tinyauth.enable = true;
+    locations."/".proxyPass = "http://localhost:3000";
+  };
+
   # Open firewall for DNS and web UI
   networking.firewall = {
     allowedTCPPorts = [
