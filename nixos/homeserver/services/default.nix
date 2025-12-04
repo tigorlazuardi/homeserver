@@ -9,5 +9,6 @@
     ./wireguard.nix
     ./openssh.nix
     ./navidrome.nix
+    ./jellyfin.nix
   ];
 }
