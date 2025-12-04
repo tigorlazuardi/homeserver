@@ -4,7 +4,7 @@
 let
   inherit (config.virtualisation.oci-containers.containers.navidrome) ip httpPort;
   domain = "navidrome.tigor.web.id";
-  dataDir = "/var/lib/navidrome";
+  dataDir = "/var/mnt/state/navidrome";
   musicDir = "/var/mnt/nas/Syncthing/Sync/Music";
 in
 {
