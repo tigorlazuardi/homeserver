@@ -10,7 +10,6 @@
 
     ../../shared/home-manager/flatpak
     ../../shared/home-manager/git.nix
-    ../../shared/home-manager/vscode
     ../../shared/home-manager/zed
 
     ./ssh.nix
