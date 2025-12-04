@@ -8,6 +8,7 @@
     ./webhook.nix
     ./wireguard.nix
     ./openssh.nix
-    ./lms.nix
+    ./navidrome.nix
+    # ./lms.nix
   ];
 }
