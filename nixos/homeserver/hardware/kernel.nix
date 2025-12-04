@@ -22,12 +22,12 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
-  fileSystems."/nas" = {
+  fileSystems."/var/mnt/nas" = {
     label = "WD_RED_4T_1";
     fsType = "ext4";
   };
 
-  fileSystems."/wolf" = {
+  fileSystems."/var/mnt/wolf" = {
     label = "WOLF_4T_1";
     fsType = "ext4";
   };
@@ -59,4 +59,3 @@
       ])
     ];
 }
-
