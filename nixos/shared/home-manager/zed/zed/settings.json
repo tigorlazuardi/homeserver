@@ -29,7 +29,16 @@
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "Catppuccin Mocha (Blur) [Light]"
+    "dark": "Catppuccin Mocha (Blur)"
+  },
+  "languages": {
+    "TypeScript": {
+      "language_servers": [
+        "!vtsls",
+        "tsgo",
+        "eslint"
+      ]
+    }
   },
   "vim_mode": true,
   "auto_install_extensions": {
