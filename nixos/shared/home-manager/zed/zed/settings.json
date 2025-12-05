@@ -29,7 +29,7 @@
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "Catppuccin Espresso (Blur) [Light]"
+    "dark": "Catppuccin Mocha (Blur) [Light]"
   },
   "vim_mode": true,
   "auto_install_extensions": {
@@ -52,6 +52,7 @@
     "tsgo": true,
     "docker": true,
     "toml": true,
-    "dockerfile": true
+    "dockerfile": true,
+    "html": true
   }
 }

@@ -1,14 +1,20 @@
 { pkgs, ... }:
+let
+  flatpakName = "com.rtosta.zapzap";
+in
 {
   services.flatpak.packages = [
-    "io.github.tobagin.karere"
+    flatpakName
   ];
 
   # Autostart Karekare on user login
   systemd.user.services.whatsapp = {
     Unit = {
-      Description = "Karekare (WhatsApp Client)";
-      After = [ "graphical-session.target" "network-online.target" ];
+      Description = "Whatsapp";
+      After = [
+        "graphical-session.target"
+        "network-online.target"
+      ];
       Wants = [ "network-online.target" ];
       PartOf = [ "graphical-session.target" ];
     };
@@ -21,7 +27,7 @@
           ${pkgs.coreutils}/bin/sleep 1
         done
       ''}";
-      ExecStart = "${pkgs.flatpak}/bin/flatpak run io.github.tobagin.karere";
+      ExecStart = "${pkgs.flatpak}/bin/flatpak run ${flatpakName}";
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
