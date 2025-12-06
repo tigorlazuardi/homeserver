@@ -1,4 +1,3 @@
-{ pkgs, ... }:
 {
   # SANE scanner support
   hardware.sane = {
@@ -10,5 +9,8 @@
   services.saned.enable = true;
 
   # User access to scanner
-  users.users.tigor.extraGroups = [ "scanner" "lp" ];
+  users.users.tigor.extraGroups = [
+    "scanner"
+    "lp"
+  ];
 }

@@ -24,7 +24,6 @@ in
         mkOption
         types
         length
-        hasPrefix
         genAttrs
         optionalAttrs
         mkIf

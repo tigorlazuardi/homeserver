@@ -9,23 +9,25 @@ let
 in
 {
   virtualisation.oci-containers.containers.jellyfin = {
-    image = "jellyfin/jellyfin:latest";
+    image = "lscr.io/linuxserver/jellyfin:latest";
     ip = "10.88.1.12";
     httpPort = 8096;
     autoStart = true;
-    user = "1000:1000";
     volumes = [
       "${configDir}:/config"
       "${cacheDir}:/cache"
-      "/var/mnt/nas:/media/nas:ro"
-      "/var/mnt/wolf:/media/wolf:ro"
+      "/var/mnt/nas:/media/nas:z"
+      "/var/mnt/wolf:/media/wolf:z"
+    ];
+    devices = [
+      "/dev/dri:/dev/dri"
     ];
     environment = {
+      PGID = "1000";
+      PUID = "1000";
       TZ = "Asia/Jakarta";
+      JELLYFIN_PublishedServerUrl = "https://${domain}";
     };
-    extraOptions = [
-      "--device=/dev/dri:/dev/dri" # Hardware acceleration
-    ];
   };
 
   systemd.services.podman-jellyfin = {

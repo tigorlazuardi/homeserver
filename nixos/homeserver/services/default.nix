@@ -10,5 +10,7 @@
     ./openssh.nix
     ./navidrome.nix
     ./jellyfin.nix
+    ./suwayomi.nix
+    ./flaresolverr.nix
   ];
 }
