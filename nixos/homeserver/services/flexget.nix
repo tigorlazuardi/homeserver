@@ -8,6 +8,7 @@
 }:
 let
   yaml = pkgs.formats.yaml { };
+  homeDir = "/var/mnt/state/flexget";
 in
 {
   options.services.flexget.settings = lib.mkOption {
@@ -18,13 +19,17 @@ in
     services.flexget = {
       enable = true;
       user = "homeserver";
-      config = yaml.generate "flexget.yaml" config.services.flexget.settings;
+      config = builtins.readFile (yaml.generate "flexget.yaml" config.services.flexget.settings);
+      systemScheduler = false;
+      inherit homeDir;
     };
 
-    services.nginx.virtualHosts."flexget.tigor.web.id" = {
-      forceSSL = true;
-      tinyauth.enable = true;
-      locations."/".proxyPass = "http://localhost:5050";
+    systemd.services.flexget = {
+      serviceConfig.WorkingDirectory = lib.mkForce "/tmp";
+      serviceConfig.ExecStartPre = lib.mkBefore [
+        "+${pkgs.coreutils}/bin/mkdir -p ${homeDir}"
+        "+${pkgs.coreutils}/bin/chown -R 1000:1000 ${homeDir}"
+      ];
     };
   };
 }

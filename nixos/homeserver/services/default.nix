@@ -1,6 +1,7 @@
 {
   imports = [
     ./vscode-server
+    ./ytptube
 
     ./adguardhome.nix
     ./auth.nix
@@ -14,5 +15,6 @@
     ./flaresolverr.nix
     ./ntfy.nix
     ./flexget.nix
+
   ];
 }
