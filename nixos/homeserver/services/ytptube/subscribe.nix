@@ -53,6 +53,10 @@
           channel_id = "UCZkZnbVO2bECxwcGlE9YOGg";
           folder = "asmr";
         };
+        OtonashiKurumiArchives1 = {
+          channel_id = "UCC3w1p4O70J6kQ_H76X35bA";
+          folder = "asmr";
+        };
       };
       tasks =
         with lib;
