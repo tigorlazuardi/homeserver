@@ -7,6 +7,7 @@
     ./hardware
     ./networking.nix
     ./nix-ld.nix
+    ./samba-mounts.nix
     ./steam.nix
     ./sudo.nix
     ./user.nix
