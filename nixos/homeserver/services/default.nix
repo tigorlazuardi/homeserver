@@ -13,5 +13,6 @@
     ./suwayomi.nix
     ./flaresolverr.nix
     ./ntfy.nix
+    ./flexget.nix
   ];
 }
