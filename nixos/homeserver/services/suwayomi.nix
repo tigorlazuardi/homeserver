@@ -13,6 +13,7 @@ in
     ip = "10.88.1.13";
     httpPort = 4567;
     autoStart = true;
+    autoUpdate.enable = true;
     user = "1000:1000";
     volumes = [
       "${downloadsDir}:/home/suwayomi/.local/share/Tachidesk/downloads"

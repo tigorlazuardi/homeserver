@@ -12,5 +12,6 @@
     ./jellyfin.nix
     ./suwayomi.nix
     ./flaresolverr.nix
+    ./ntfy.nix
   ];
 }
