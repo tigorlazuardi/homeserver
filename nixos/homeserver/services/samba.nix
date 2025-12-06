@@ -11,7 +11,7 @@
         "server string" = "homeserver";
         "netbios name" = "homeserver";
         security = "user";
-        "hosts allow" = "192.168.0. 10.88. 127.0.0.1 localhost";
+        "hosts allow" = "192.168.0. 192.168.100. 10.88. 127.0.0.1 localhost";
         "hosts deny" = "0.0.0.0/0";
         "guest account" = "nobody";
         "map to guest" = "bad user";
