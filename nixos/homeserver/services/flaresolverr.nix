@@ -1,9 +1,5 @@
 # FlareSolverr - Proxy server to bypass Cloudflare protection
 # https://github.com/FlareSolverr/FlareSolverr
-{ config, ... }:
-let
-  inherit (config.virtualisation.oci-containers.containers.flaresolverr) ip httpPort;
-in
 {
   virtualisation.oci-containers.containers.flaresolverr = {
     image = "ghcr.io/flaresolverr/flaresolverr:latest";
