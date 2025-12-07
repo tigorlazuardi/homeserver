@@ -22,7 +22,7 @@ in
     user = "1000:1000";
     volumes = [
       "${configDir}:/config:rw"
-      "${downloadsDir}:/downloads:rw"
+      "${downloadsDir}:/downloads:z"
     ];
     environment = {
       TZ = "Asia/Jakarta";
