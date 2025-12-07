@@ -16,9 +16,9 @@ in
     httpPort = 3000;
     autoUpdate.enable = true;
     environment = {
-      APP_TITLE = "GrandBoard";
+      APP_TITLE = "Grand Board";
       APP_URL = "https://${domain}";
-      OAUTH_AUTO_REDIRECT = "github";
+      # OAUTH_AUTO_REDIRECT = "github";
       SECURE_COOKIES = "true";
     };
     environmentFiles = [ config.sops.secrets."grandboard/tinyauth.env".path ];
@@ -26,12 +26,14 @@ in
       "/var/mnt/state/grandboard/tinyauth/data:/data"
     ];
   };
-  systemd.services."podman-grandboard-tinyauth".preStart = ''
-    mkdir -p /var/mnt/state/grandboard/tinyauth/data
-  '';
+  systemd.services."podman-grandboard-tinyauth" = {
+    preStart = ''
+      mkdir -p /var/mnt/state/grandboard/tinyauth/data
+    '';
+  };
   services.nginx.virtualHosts."${domain}" = {
-	forceSSL = true;
-	useACMEHost = "grandboard.web.id";
-	locations."/".proxyPass = "http://${ip}:${toString httpPort}";
+    forceSSL = true;
+    useACMEHost = "grandboard.web.id";
+    locations."/".proxyPass = "http://${ip}:${toString httpPort}";
   };
 }
