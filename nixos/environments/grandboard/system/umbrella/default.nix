@@ -1,3 +1,8 @@
 {
-  imports = [ ./docs.nix ];
+  imports = [
+    ./docs.nix
+    ./httpserver.nix
+    ./postgres.nix
+    ./valkey.nix
+  ];
 }
