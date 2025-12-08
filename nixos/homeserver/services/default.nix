@@ -15,6 +15,7 @@
     ./flaresolverr.nix
     ./ntfy.nix
     ./flexget.nix
+    ./jdownloader.nix
     ./samba.nix
 
   ];
