@@ -11,6 +11,7 @@
     ../../shared/home-manager/flatpak
     ../../shared/home-manager/git.nix
     ../../shared/home-manager/zed
+    ../../shared/home-manager/vivaldi.nix
 
     ./ssh.nix
   ];
