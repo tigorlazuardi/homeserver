@@ -3,6 +3,7 @@
   imports = [
     ./desktop/kde
 
+    ./faugus.nix
     ./flatpak.nix
     ./hardware
     ./networking.nix
