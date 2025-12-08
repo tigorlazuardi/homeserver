@@ -23,9 +23,22 @@
     }
   },
   {
+    "context": "Pane",
+    "bindings": {
+      "alt-k": "search::SelectPreviousMatch",
+      "alt-j": "search::SelectNextMatch"
+    }
+  },
+  {
     "context": "Editor && vim_mode == insert",
     "bindings": {
       "j k": "vim::NormalBefore"
+    }
+  },
+  {
+    "context": "Editor && (showing_code_actions || showing_completions)",
+    "bindings": {
+      "ctrl-y": "editor::ConfirmCompletion"
     }
   }
 ]
