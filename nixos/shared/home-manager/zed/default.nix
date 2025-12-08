@@ -10,7 +10,6 @@
       "docker"
       "emmet"
       "fish"
-      "gitlab-ci-ls"
       "hocon"
       "http"
       "json5"

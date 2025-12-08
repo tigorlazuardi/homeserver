@@ -61,7 +61,6 @@
     "docker": true,
     "toml": true,
     "dockerfile": true,
-    "html": true,
-    "gitlab-ci-ls": true
+    "html": true
   }
 }
