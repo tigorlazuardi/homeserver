@@ -48,7 +48,6 @@
     "dbml": true,
     "emmet": true,
     "fish": true,
-    "gitlab-ci-ls": true,
     "go": true,
     "hocon": true,
     "http": true,
@@ -62,6 +61,7 @@
     "docker": true,
     "toml": true,
     "dockerfile": true,
-    "html": true
+    "html": true,
+    "gitlab-ci-ls": true
   }
 }

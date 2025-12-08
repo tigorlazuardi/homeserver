@@ -12,6 +12,12 @@
       "space space": "file_finder::Toggle",
       "space s g": "workspace::NewSearch",
       "space b d": "pane::CloseActiveItem",
+      "g r": "editor::FindAllReferences",
+      "g i": "editor::GoToImplementation",
+      "g I": "editor::GoToImplementationSplit",
+      "g d": "editor::GoToDefinition",
+      "g D": "editor::GoToDefinitionSplit",
+      "g Y": "editor::GoToDeclarationSplit",
       "L": "pane::ActivateNextItem",
       "H": "pane::ActivatePreviousItem"
     }
