@@ -1,8 +1,14 @@
 {
   "context_servers": {
     "grafana-bareksa": {
-      "url": "https://mcp-grafana.bareksa.com/sse",
-      "enabled": true
+      "enabled": true,
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp-grafana.bareksa.com/sse"
+      ],
+      "env": {}
     }
   },
   "agent_servers": {
@@ -15,15 +21,10 @@
   },
   "ssh_connections": [
     {
-      "host": "Homeserver",
+      "host": "192.168.100.50",
+      "username": "homeserver",
       "args": [],
-      "projects": [
-        {
-          "paths": [
-            "/home/homeserver/dotfiles"
-          ]
-        }
-      ]
+      "projects": [{ "paths": ["/home/homeserver/dotfiles"] }]
     }
   ],
   "load_direnv": "shell_hook",
@@ -35,15 +36,11 @@
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "Catppuccin Latte (Blur)"
+    "dark": "Catppuccin Mocha (Blur) [Light]"
   },
   "languages": {
     "TypeScript": {
-      "language_servers": [
-        "!vtsls",
-        "tsgo",
-        "eslint"
-      ]
+      "language_servers": ["!vtsls", "tsgo", "eslint"]
     }
   },
   "vim_mode": true,
