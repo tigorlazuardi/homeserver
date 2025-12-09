@@ -1,4 +1,10 @@
 {
+  "context_servers": {
+    "grafana-bareksa": {
+      "url": "https://mcp-grafana.bareksa.com/sse",
+      "enabled": true
+    }
+  },
   "agent_servers": {
     "claude": {
       "default_mode": "bypassPermissions"

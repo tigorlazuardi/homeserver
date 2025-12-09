@@ -28,6 +28,7 @@
   home.packages = with pkgs; [
     nixd
     zed-editor
+    nodejs
   ];
 
   xdg.configFile."zed".source =
