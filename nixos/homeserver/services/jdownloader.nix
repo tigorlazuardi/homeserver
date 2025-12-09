@@ -16,7 +16,7 @@ in
     autoUpdate.enable = true;
     volumes = [
       "${configDir}:/config"
-      "${outputDir}:/output"
+      "${outputDir}:/output/downloads"
     ];
     environment = {
       USER_ID = "1000";
