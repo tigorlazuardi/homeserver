@@ -3,6 +3,7 @@
   imports = [
     ./hardware
 
+    ./podman.nix
     ./flatpak.nix
     ./networking.nix
     ./nix-ld.nix
