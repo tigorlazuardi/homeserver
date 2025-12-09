@@ -35,7 +35,7 @@
       After = [ "graphical-session.target" ];
     };
     Timer = {
-      OnCalendar = "Mon..Fri *-*-* 08..18:00:00";
+      OnCalendar = "Mon..Fri *-*-* 08..17:*:*";
     };
     Install = {
       WantedBy = [ "graphical-session.target" ];
