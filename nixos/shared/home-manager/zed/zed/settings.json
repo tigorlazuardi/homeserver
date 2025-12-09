@@ -1,16 +1,4 @@
 {
-  "context_servers": {
-    "grafana-bareksa": {
-      "enabled": true,
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp-grafana.bareksa.com/sse"
-      ],
-      "env": {}
-    }
-  },
   "agent_servers": {
     "claude": {
       "default_mode": "bypassPermissions"
