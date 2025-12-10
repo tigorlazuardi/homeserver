@@ -5,5 +5,6 @@
     ./nginx.nix
     ./tinyauth.nix
     ./faraday-cage.nix
+    ./faraday-docs.nix
   ];
 }
