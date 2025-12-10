@@ -50,6 +50,9 @@ in
   services.nginx.virtualHosts."faraday.grandboard.web.id" = {
     forceSSL = true;
     useACMEHost = "grandboard.web.id";
+    extraConfig = ''
+      client_max_body_size 1G;
+    '';
     locations = {
       "/dashboard" = {
         proxyPass = "http://${ip}:${toString httpPort}";
