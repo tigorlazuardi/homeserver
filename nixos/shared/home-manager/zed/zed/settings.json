@@ -30,7 +30,7 @@
   "theme": {
     "mode": "system",
     "light": "One Light",
-    "dark": "Catppuccin Mocha (Blur) [Light]"
+    "dark": "Catppuccin Espresso (Blur)"
   },
   "languages": {
     "TypeScript": {
@@ -62,6 +62,9 @@
     "docker": true,
     "toml": true,
     "dockerfile": true,
-    "html": true
+    "html": true,
+    "catppuccin-blur-plus": true,
+    "git-firefly": true,
+    "svelte": true
   }
 }

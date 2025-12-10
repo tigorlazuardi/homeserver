@@ -4,12 +4,14 @@
     enable = true;
     extensions = [
       "catppuccin-blur"
+      "catppuccin-blur-plus"
       "catppuccin-icons"
       "comment"
       "dbml"
       "docker"
       "emmet"
       "fish"
+      "git-firefly"
       "hocon"
       "http"
       "json5"
@@ -18,6 +20,7 @@
       "lua"
       "make"
       "nix"
+      "svelte"
       "toml"
 
       "tsgo"
