@@ -32,7 +32,7 @@ in
       "${mount}/data:/app/data"
       "${mount}/uploads:/app/uploads"
       "${mount}/artifacts:/app/artifacts"
-      "${mount}/app/downloadables:/app/artifacts"
+      "${mount}/downloadables:/app/downloadables"
     ];
     environment = {
       NODE_ENV = "production";
@@ -44,18 +44,37 @@ in
   };
 
   systemd.services.podman-grandboard-faraday-cage.preStart = ''
-    mkdir -p ${mount}/data
-    mkdir -p ${mount}/uploads
+    mkdir -p ${mount}/{data,uploads,artifacts,downloadables}
   '';
 
   services.nginx.virtualHosts."faraday.grandboard.web.id" = {
     forceSSL = true;
     useACMEHost = "grandboard.web.id";
-    extraConfig = ''
-      auth_request /tinyauth;
-      error_page 401 = @tinyauth_login;
-    '';
     locations = {
+      "/dashboard" = {
+        proxyPass = "http://${ip}:${toString httpPort}";
+        extraConfig =
+          # nginx
+          ''
+            auth_request /tinyauth;
+            error_page 401 = @tinyauth_login;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $http_host;
+            proxy_set_header X-Forwarded-Uri $request_uri;
+          '';
+      };
+      "/api/v1/dashboard" = {
+        proxyPass = "http://${ip}:${toString httpPort}";
+        extraConfig =
+          # nginx
+          ''
+            auth_request /tinyauth;
+            error_page 401 = @tinyauth_login;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $http_host;
+            proxy_set_header X-Forwarded-Uri $request_uri;
+          '';
+      };
       "/".proxyPass = "http://${ip}:${toString httpPort}";
       "/tinyauth" = {
         proxyPass = "http://${tinyauth.ip}:${toString tinyauth.httpPort}/api/auth/nginx";
