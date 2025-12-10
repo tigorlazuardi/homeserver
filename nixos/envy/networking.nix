@@ -11,5 +11,9 @@
     networkmanager-openvpn
   ];
 
+  networking.firewall.allowedTCPPorts = [
+    5173 # vite
+  ];
+
   users.users.tigor.extraGroups = [ "networkmanager" ];
 }
