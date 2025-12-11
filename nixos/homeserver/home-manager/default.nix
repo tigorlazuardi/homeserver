@@ -2,6 +2,7 @@
 {
   imports = [
     ../../shared/home-manager/git.nix
+    ../../shared/home-manager/lazygit.nix
     ../../shared/home-manager/zed
     ../../environments/claude-code/home-manager
   ];

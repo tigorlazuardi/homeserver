@@ -11,6 +11,7 @@
     ../../shared/home-manager/flatpak
     ../../shared/home-manager/vivaldi.nix
     ../../shared/home-manager/git.nix
+    ../../shared/home-manager/lazygit.nix
     ../../shared/home-manager/vscode
     ../../shared/home-manager/zed
 
