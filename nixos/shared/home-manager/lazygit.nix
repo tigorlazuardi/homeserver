@@ -22,7 +22,7 @@
       };
 
       git = {
-        paging = {
+        pager = {
           colorArg = "always";
           pager = "delta --dark --paging=never";
         };
@@ -93,7 +93,7 @@
           key = "C";
           command = "git commit";
           context = "files";
-          subprocess = true;
+          output = "terminal";
           description = "Commit with editor";
         }
         {

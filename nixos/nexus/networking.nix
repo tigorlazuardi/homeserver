@@ -8,6 +8,7 @@
     hosts = {
       "192.168.100.50" = [ "homeserver" ];
     };
+    firewall.allowedTCPPorts = [ 5173 ]; # vite
   };
 
   networking.networkmanager.plugins = with pkgs; [
