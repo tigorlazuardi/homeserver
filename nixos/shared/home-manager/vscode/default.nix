@@ -12,7 +12,7 @@
       catppuccin.catppuccin-vsc-icons
 
       # claude-code
-      anthropic.claude-code
+      # anthropic.claude-code
 
       # vim motions
       vscodevim.vim
