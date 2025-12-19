@@ -5,7 +5,7 @@ let
   inherit (config.virtualisation.oci-containers.containers.jdownloader) ip httpPort;
   domain = "jdownloader.tigor.web.id";
   configDir = "/var/mnt/state/jdownloader/config";
-  outputDir = "/var/mnt/nas/jdownloader/downloads";
+  outputDir = "/var/mnt/nas/jdownloader";
 in
 {
   virtualisation.oci-containers.containers.jdownloader = {
@@ -16,7 +16,7 @@ in
     autoUpdate.enable = true;
     volumes = [
       "${configDir}:/config"
-      "${outputDir}:/output/downloads"
+      "${outputDir}:/output"
     ];
     environment = {
       USER_ID = "1000";
