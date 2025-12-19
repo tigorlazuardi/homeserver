@@ -120,6 +120,7 @@ in
         PROVIDERS_DEX_USER_INFO_URL = "https://${dex.domain}/userinfo";
         PROVIDERS_DEX_SCOPES = "openid,profile,email";
         PROVIDERS_DEX_REDIRECT_URL = "https://${tinyauth.domain}/api/oauth/callback/dex";
+        SESSION_EXPIRY = toString (24 * 60 * 60 * 30); # 30 days
       };
       environmentFiles = [
         config.sops.secrets."auth/tinyauth.env".path
