@@ -6,6 +6,7 @@
     ./adguardhome.nix
     ./auth.nix
     ./nginx.nix
+    ./immich.nix
     ./webhook.nix
     ./wireguard.nix
     ./openssh.nix
