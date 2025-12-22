@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, osConfig, ... }:
 {
   home.packages = with pkgs; [
     claude-code
@@ -19,6 +19,12 @@
     gcc # C/C++ compiler
     nixfmt-rfc-style # Nix formatter
   ];
+
+  programs.fish = {
+    enable = true;
+    package = osConfig.programs.fish.package; # use nixos
+    shellAliases.clauded = "claude --dangerously-skip-permissions";
+  };
 
   # Remove Claude's self-promotional lines from commit messages.
   #
