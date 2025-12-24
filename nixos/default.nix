@@ -15,7 +15,9 @@ let
             {
               sops.age.keyFile = "/opt/age-key.txt";
             }
+            ./shared/home-manager/nixvim
           ];
+
         }
       ];
       specialArgs = { inherit inputs; };
