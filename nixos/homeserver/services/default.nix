@@ -11,6 +11,7 @@
     ./wireguard.nix
     ./openssh.nix
     ./navidrome.nix
+    ./paperless-ngx.nix
     ./jellyfin.nix
     ./suwayomi.nix
     ./flaresolverr.nix
