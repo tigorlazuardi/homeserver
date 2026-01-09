@@ -7,6 +7,7 @@
     ../../environments/aldhyaksa/home-manager
     ../../environments/bareksa/home-manager
     ../../environments/claude-code/home-manager
+    ../../environments/grandboard/home-manager
 
     ../../shared/home-manager/flatpak
     ../../shared/home-manager/vivaldi.nix
