@@ -138,8 +138,14 @@ in
     };
 
     # Pocket ID
+    sops.secrets."auth/pocket-id.env" = {
+      sopsFile = ./pocket-id.env;
+      format = "dotenv";
+      key = "";
+    };
+
     virtualisation.oci-containers.containers.pocket-id = {
-      image = "ghcr.io/pocket-id/pocket-id:latest";
+      image = "ghcr.io/pocket-id/pocket-id:v2";
       ip = "10.88.1.1";
       httpPort = 1411;
       autoUpdate.enable = true;
@@ -147,6 +153,9 @@ in
         APP_URL = "https://${pocket-id.domain}";
         TRUST_PROXY = "true";
       };
+      environmentFiles = [
+        config.sops.secrets."auth/pocket-id.env".path
+      ];
       volumes = [
         "${pocket-id.mount}/data:/app/data"
       ];
