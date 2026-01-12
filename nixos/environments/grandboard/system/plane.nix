@@ -316,4 +316,15 @@ in
       proxyPass = "http://${ips.minio}:9000/uploads/";
     };
   };
+
+  # MinIO Console (Web UI)
+  services.nginx.virtualHosts."minio.grandboard.id" = {
+    forceSSL = true;
+    useACMEHost = "grandboard.id";
+    locations."/" = {
+      proxyPass = "http://${ips.minio}:9090";
+      proxyWebsockets = true;
+    };
+  };
+
 }

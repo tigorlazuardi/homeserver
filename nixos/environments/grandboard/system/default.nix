@@ -6,6 +6,7 @@
     ./tinyauth.nix
     ./faraday-cage.nix
     ./faraday-docs.nix
-    ./plane.nix
+    # ./plane.nix # Disabled - switching to Huly
+    ./huly.nix
   ];
 }
