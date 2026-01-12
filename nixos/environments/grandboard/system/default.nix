@@ -6,5 +6,6 @@
     ./tinyauth.nix
     ./faraday-cage.nix
     ./faraday-docs.nix
+    ./plane.nix
   ];
 }
