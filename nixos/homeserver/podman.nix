@@ -22,8 +22,10 @@ in
     wantedBy = [ "timers.target" ];
   };
   virtualisation.podman = {
+    enable = true;
     autoPrune.enable = true;
     defaultNetwork.settings.dns_enabled = true;
+    dockerCompat = true;
   };
   networking.firewall.interfaces."podman[0-9]+" = {
     allowedUDPPorts = [ 53 ]; # this needs to be there so that containers can look eachother's names up over DNS
@@ -65,4 +67,3 @@ in
     }
   ) socketActivatedContainers;
 }
-

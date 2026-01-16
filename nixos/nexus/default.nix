@@ -8,6 +8,7 @@
     ./hardware
     ./networking.nix
     ./nix-ld.nix
+    ./podman.nix
     ./samba-mounts.nix
     ./steam.nix
     ./sudo.nix
@@ -28,8 +29,6 @@
   environment.systemPackages = with pkgs; [
     wl-clipboard
   ];
-
-  virtualisation.podman.enable = true;
 
   nixpkgs.config.allowUnfree = true;
   system.stateVersion = "25.11";
