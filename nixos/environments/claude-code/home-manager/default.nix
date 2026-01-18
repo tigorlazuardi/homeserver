@@ -29,7 +29,7 @@
       FILEPATH="$SCREENSHOT_DIR/$FILENAME"
 
       # Select region with spectacle, opens editor after capture
-      ${pkgs.kdePackages.spectacle}/bin/spectacle -r -o "$FILEPATH"
+      ${pkgs.kdePackages.spectacle}/bin/spectacle -n -r -o "$FILEPATH"
 
       # Check if screenshot was created successfully
       if [ -f "$FILEPATH" ]; then
@@ -38,11 +38,13 @@
 
         # Send notification with preview
         ${pkgs.libnotify}/bin/notify-send \
+          --app-name="Claude Screenshot" \
           --icon="$FILEPATH" \
           "Screenshot saved" \
           "$FILEPATH"
       else
         ${pkgs.libnotify}/bin/notify-send \
+          --app-name="Claude Screenshot" \
           --urgency=critical \
           "Screenshot cancelled" \
           "No screenshot was saved"
