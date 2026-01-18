@@ -18,6 +18,36 @@
     cmake # Build system
     gcc # C/C++ compiler
     nixfmt-rfc-style # Nix formatter
+
+    (pkgs.writeShellScriptBin "claude-screenshot" ''
+      # Create screenshots directory
+      SCREENSHOT_DIR="/tmp/claude-screenshots"
+      mkdir -p "$SCREENSHOT_DIR"
+
+      # Generate filename with date and time
+      FILENAME="$(date +%Y%m%d_%H%M%S).png"
+      FILEPATH="$SCREENSHOT_DIR/$FILENAME"
+
+      # Select region with spectacle, opens editor after capture
+      ${pkgs.kdePackages.spectacle}/bin/spectacle -r -o "$FILEPATH"
+
+      # Check if screenshot was created successfully
+      if [ -f "$FILEPATH" ]; then
+        # Copy filepath to clipboard
+        echo -n "$FILEPATH" | ${pkgs.wl-clipboard}/bin/wl-copy
+
+        # Send notification with preview
+        ${pkgs.libnotify}/bin/notify-send \
+          --icon="$FILEPATH" \
+          "Screenshot saved" \
+          "$FILEPATH"
+      else
+        ${pkgs.libnotify}/bin/notify-send \
+          --urgency=critical \
+          "Screenshot cancelled" \
+          "No screenshot was saved"
+      fi
+    '')
   ];
 
   programs.fish = {
