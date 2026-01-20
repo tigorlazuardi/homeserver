@@ -15,7 +15,7 @@ let
             {
               sops.age.keyFile = "/opt/age-key.txt";
             }
-            ./shared/home-manager/nixvim
+            ./shared/home-manager/lazyvim
           ];
 
         }
