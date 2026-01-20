@@ -7,5 +7,6 @@
     cargo
     lsof
     statix
+    typescript-go
   ];
 }
