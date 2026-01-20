@@ -22,6 +22,9 @@
       "nix"
       "svelte"
       "toml"
+      "just"
+      "just-ls"
+      "sql"
 
       "tsgo"
     ];

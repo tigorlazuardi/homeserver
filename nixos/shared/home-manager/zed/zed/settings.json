@@ -19,9 +19,25 @@
           ]
         }
       ]
+    },
+    {
+      "host": "god-eater.grandboard.id",
+      "username": "root",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/root"
+          ]
+        },
+        {
+          "paths": [
+            "/root/god-eater"
+          ]
+        }
+      ]
     }
   ],
-  "load_direnv": "shell_hook",
   "features": {
     "edit_prediction_provider": "copilot"
   },
@@ -65,6 +81,9 @@
     "html": true,
     "catppuccin-blur-plus": true,
     "git-firefly": true,
-    "svelte": true
+    "svelte": true,
+    "just": true,
+    "just-ls": true,
+    "sql": true
   }
 }
