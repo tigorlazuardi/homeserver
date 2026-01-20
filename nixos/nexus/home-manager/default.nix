@@ -16,6 +16,7 @@
     ../../shared/home-manager/lazygit.nix
     ../../shared/home-manager/vscode
     ../../shared/home-manager/zed
+    ../../shared/home-manager/neovide.nix
 
     ./ssh.nix
   ];
