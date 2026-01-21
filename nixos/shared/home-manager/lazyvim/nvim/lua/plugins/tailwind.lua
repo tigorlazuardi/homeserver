@@ -2,11 +2,18 @@ return {
   "folke/noice.nvim",
   opts = {
     routes = {
-      -- Shut up the No information available notifications
+      -- Suppress "No information available" from LSP hover (tailwindcss-lsp)
       {
         filter = {
           event = "notify",
-          kind = "",
+          find = "No information available",
+        },
+        opts = { skip = true },
+      },
+      {
+        filter = {
+          event = "lsp",
+          kind = "message",
           find = "No information available",
         },
         opts = { skip = true },
