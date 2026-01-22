@@ -6,6 +6,37 @@ vim.keymap.set({ "n", "v", "s", "x", "o", "i", "l", "c", "t" }, "<C-S-v>", funct
   vim.api.nvim_paste(vim.fn.getreg("+"), true, -1)
 end, { noremap = true, silent = true })
 
+-- Diagnostic navigation with priority: error -> warn -> info -> hint
+local function goto_diagnostic_priority(direction)
+  local severity_order = {
+    vim.diagnostic.severity.ERROR,
+    vim.diagnostic.severity.WARN,
+    vim.diagnostic.severity.INFO,
+    vim.diagnostic.severity.HINT,
+  }
+
+  local goto_fn = direction == "next" and vim.diagnostic.goto_next or vim.diagnostic.goto_prev
+
+  for _, severity in ipairs(severity_order) do
+    local diagnostics = vim.diagnostic.get(0, { severity = severity })
+    if #diagnostics > 0 then
+      goto_fn({ severity = severity, wrap = true })
+      return
+    end
+  end
+
+  -- Fallback: no diagnostics found
+  vim.notify("No diagnostics found", vim.log.levels.INFO)
+end
+
+vim.keymap.set("n", "]]", function()
+  goto_diagnostic_priority("next")
+end, { noremap = true, silent = true, desc = "Next diagnostic (error>warn>info)" })
+
+vim.keymap.set("n", "[[", function()
+  goto_diagnostic_priority("prev")
+end, { noremap = true, silent = true, desc = "Prev diagnostic (error>warn>info)" })
+
 -- Neovide font size adjustment
 if vim.g.neovide then
   local function adjust_font_size(delta)
