@@ -18,7 +18,7 @@ return {
     -- Required for `opts.events.reload`.
     vim.o.autoread = true
 
-    vim.keymap.set({ "n" }, "<c-a>", function()
+    vim.keymap.set({ "n", "t" }, "<c-a>", function()
       require("opencode").toggle()
     end)
 
