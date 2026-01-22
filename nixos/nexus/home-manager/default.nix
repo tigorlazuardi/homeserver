@@ -17,6 +17,7 @@
     ../../shared/home-manager/vscode
     ../../shared/home-manager/zed
     ../../shared/home-manager/neovide.nix
+    ../../shared/home-manager/ghostty
 
     ./ssh.nix
   ];
