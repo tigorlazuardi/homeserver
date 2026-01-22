@@ -18,6 +18,8 @@
     ../../shared/home-manager/zed
     ../../shared/home-manager/neovide.nix
     ../../shared/home-manager/ghostty
+    ../../shared/home-manager/onlyoffice.nix
+    ../../shared/home-manager/winboat.nix
 
     ./ssh.nix
   ];
