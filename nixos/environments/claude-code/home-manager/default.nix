@@ -17,7 +17,7 @@
     gnumake # Build tool
     cmake # Build system
     gcc # C/C++ compiler
-    nixfmt-rfc-style # Nix formatter
+    nixfmt # Nix formatter
 
     (pkgs.writeShellScriptBin "claude-screenshot" ''
       # Create screenshots directory
@@ -54,7 +54,7 @@
 
   programs.fish = {
     enable = true;
-    package = osConfig.programs.fish.package; # use nixos
+    inherit (osConfig.programs.fish) package; # use nixos
     shellAliases.clauded = "claude --dangerously-skip-permissions";
   };
 
