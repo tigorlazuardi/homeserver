@@ -19,7 +19,10 @@
       init.defaultBranch = "main";
 
       # Pull behavior
-      pull.rebase = true; # Rebase instead of merge on pull
+      pull = {
+        rebase = true; # Rebase instead of merge on pull
+        default = "current"; # Pull current branch from remote
+      };
 
       # Push behavior
       push = {
@@ -104,6 +107,7 @@
         unstage = "reset HEAD --";
         uncommit = "reset --soft HEAD~1";
         amend = "commit --amend --no-edit";
+        discard = "checkout --"; # Discard changes in specific files (git discard file.txt)
 
         # Diff shortcuts
         df = "diff";
