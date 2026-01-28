@@ -15,9 +15,9 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   end,
 })
 
--- Disable diagnostics for markdown files
+-- Disable diagnostics for certail filetypes
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown" },
+  pattern = { "markdown", "dockerfile" },
   callback = function()
     vim.diagnostic.enable(false, { bufnr = 0 })
   end,
