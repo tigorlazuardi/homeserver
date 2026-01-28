@@ -59,3 +59,7 @@ keybind = ctrl+b>h=goto_split:left
 keybind = ctrl+b>j=goto_split:down
 keybind = ctrl+b>k=goto_split:up
 keybind = ctrl+b>l=goto_split:right
+
+background-opacity = 0.8
+background-opacity-cells = true
+background-blur = true
