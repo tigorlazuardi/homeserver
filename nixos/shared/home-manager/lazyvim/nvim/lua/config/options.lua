@@ -3,7 +3,7 @@
 -- Add any additional options here
 
 if vim.g.neovide then
-  vim.g.neovide_opacity = 0.5
+  vim.g.neovide_opacity = 0.7
   vim.g.neovide_window_blurred = true
   vim.g.experimental_layer_grouping = true
 end
