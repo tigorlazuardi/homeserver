@@ -23,6 +23,7 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    opencode.url = "github:anomalyco/opencode";
   };
   outputs = inputs: {
     nixosConfigurations = import ./nixos inputs;

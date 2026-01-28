@@ -15,6 +15,9 @@
     ../../shared/home-manager/lazygit.nix
     ../../shared/home-manager/zed
     ../../shared/home-manager/vivaldi.nix
+    ../../shared/home-manager/neovide.nix
+    ../../shared/home-manager/ghostty
+    ../../shared/home-manager/onlyoffice.nix
 
     ./ssh.nix
   ];
