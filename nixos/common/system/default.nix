@@ -3,6 +3,7 @@
   imports = [
     ./modules
 
+    ./attic-client.nix
     ./boot.nix
     ./cli.nix
     ./direnv.nix

@@ -4,6 +4,7 @@
     ./ytptube
 
     ./adguardhome.nix
+    ./attic.nix
     ./auth.nix
     ./nginx.nix
     ./immich.nix
