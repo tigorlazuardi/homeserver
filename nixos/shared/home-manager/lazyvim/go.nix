@@ -1,36 +1,33 @@
 {
   home.file.".golangci.yml".text = /* yaml */ ''
+    version: "2"
+
     linters:
-      disable-all: true
+      default: none
       enable:
         # performance
         - prealloc
         - noctx
+        - bodyclose
 
         # security
         - gosec
-        - exportloopref
 
         # bugs / correctness
         - govet
         - staticcheck
         - ineffassign
-        - typecheck
         - errcheck
-        - bodyclose
         - sqlclosecheck
         - rowserrcheck
         - durationcheck
         - nilerr
         - nilnil
 
-    linters-settings:
-      gosec:
-        excludes: []
-      govet:
-        enable-all: true
-
-    issues:
-      exclude-use-default: false
+      settings:
+        gosec:
+          excludes: []
+        govet:
+          enable-all: true
   '';
 }
