@@ -20,6 +20,7 @@
     ./flexget.nix
     ./jdownloader.nix
     ./samba.nix
+    ./qbittorrent.nix
 
   ];
 }

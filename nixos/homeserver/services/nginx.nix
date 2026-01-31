@@ -55,7 +55,7 @@
       ];
       services.nginx = {
         enable = true;
-	serverNamesHashBucketSize = 256;
+        serverNamesHashBucketSize = 256;
         # This option sets ssl_stapling which is removed by let's encrypt.
         # See https://forum.hestiacp.com/t/ssl-stapling-ignored-no-ocsp-responder-url-in-the-certificate/18944/4
         #
@@ -182,9 +182,32 @@
         in
         httpHosts // socketActivatedHosts;
       services.nginx.appendHttpConfig =
-        # Catch all server. Return 444 for all requests (end connection without response)
         #nginx
         ''
+          # tigor.web.id - serve ACME challenge for certificate renewal
+          server {
+              listen 0.0.0.0:80;
+              listen [::0]:80;
+              server_name tigor.web.id;
+
+              location /.well-known/acme-challenge/ {
+                  root /var/lib/acme/acme-challenge;
+              }
+
+              location / {
+                  return 301 https://$host$request_uri;
+              }
+          }
+          server {
+              listen 0.0.0.0:443 ssl;
+              listen [::0]:443 ssl;
+              server_name tigor.web.id;
+              ssl_certificate /var/lib/acme/tigor.web.id/fullchain.pem;
+              ssl_certificate_key /var/lib/acme/tigor.web.id/key.pem;
+              return 301 https://github.com/tigorlazuardi;
+          }
+
+          # Catch all server. Return 444 for all requests (end connection without response)
           server {
               listen 0.0.0.0:80 default_server;
               listen [::0]:80 default_server;
