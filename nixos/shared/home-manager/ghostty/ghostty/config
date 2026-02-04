@@ -51,14 +51,51 @@
 shell-integration-features = sudo,ssh-terminfo,ssh-env
 font-family = "JetBrains Nerd Font Mono"
 
-keybind = ctrl+b>enter=new_split:right
-keybind = ctrl+b>backspace=new_split:down
-keybind = ctrl+b>x=close_surface
-keybind = ctrl+b>w=close_tab
-keybind = ctrl+b>h=goto_split:left
-keybind = ctrl+b>j=goto_split:down
-keybind = ctrl+b>k=goto_split:up
-keybind = ctrl+b>l=goto_split:right
+keybind = clear
+
+keybind = ctrl+shift+c=copy_to_clipboard
+keybind = ctrl+shift+v=paste_from_clipboard
+keybind = shift+insert=paste_from_clipboard
+keybind = ctrl+shift+n=new_window
+keybind = ctrl+plus=increase_font_size:1
+keybind = ctrl+minus=decrease_font_size:1
+keybind = ctrl+zero=reset_font_size
+keybind = ctrl+shift+comma=reload_config
+
+keybind = ctrl+a>a=text:\x01
+
+keybind = ctrl+a>t=new_tab
+keybind = ctrl+a>n=next_tab
+keybind = ctrl+a>p=previous_tab
+keybind = ctrl+a>w=close_tab
+keybind = ctrl+a>one=goto_tab:1
+keybind = ctrl+a>two=goto_tab:2
+keybind = ctrl+a>three=goto_tab:3
+keybind = ctrl+a>four=goto_tab:4
+keybind = ctrl+a>five=goto_tab:5
+keybind = ctrl+a>six=goto_tab:6
+keybind = ctrl+a>seven=goto_tab:7
+keybind = ctrl+a>eight=goto_tab:8
+keybind = ctrl+a>nine=goto_tab:9
+
+keybind = ctrl+a>enter=new_split:right
+keybind = ctrl+a>backspace=new_split:down
+keybind = ctrl+a>x=close_surface
+keybind = ctrl+a>h=goto_split:left
+keybind = ctrl+a>j=goto_split:down
+keybind = ctrl+a>k=goto_split:up
+keybind = ctrl+a>l=goto_split:right
+keybind = ctrl+a>z=toggle_split_zoom
+keybind = ctrl+a>e=equalize_splits
+
+keybind = ctrl+a>r=reload_config
+keybind = ctrl+a>i=inspector:toggle
+
+copy-on-select = clipboard
+clipboard-trim-trailing-spaces = true
+focus-follows-mouse = true
+link-previews = true
+scrollback-limit = 10000000
 
 background-opacity = 0.8
 background-opacity-cells = true
