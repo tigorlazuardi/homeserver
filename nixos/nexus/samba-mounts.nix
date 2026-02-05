@@ -10,14 +10,6 @@
   # Install cifs-utils with setuid wrapper for user mounts
   environment.systemPackages = [ pkgs.cifs-utils ];
 
-  security.wrappers."mount.cifs" = {
-    program = "mount.cifs";
-    source = "${pkgs.cifs-utils}/bin/mount.cifs";
-    owner = "root";
-    group = "root";
-    setuid = true;
-  };
-
   fileSystems."/mnt/homeserver/nas" = {
     device = "//homeserver/nas";
     fsType = "cifs";
