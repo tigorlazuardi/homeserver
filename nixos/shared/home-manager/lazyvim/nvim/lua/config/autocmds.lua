@@ -32,28 +32,33 @@ vim.keymap.set("v", "<LeftRelease>", '"+ygv', { silent = true, desc = "Copy to c
 
 -- Middle-click paste from clipboard
 vim.keymap.set("n", "<MiddleMouse>", '"+p', { silent = true, desc = "Paste from clipboard" })
-vim.keymap.set("i", "<MiddleMouse>", '<C-r>+', { silent = true, desc = "Paste from clipboard" })
+vim.keymap.set("i", "<MiddleMouse>", "<C-r>+", { silent = true, desc = "Paste from clipboard" })
 vim.keymap.set("v", "<MiddleMouse>", '"+p', { silent = true, desc = "Paste from clipboard" })
 
 -- Ctrl+click go to definition (like VSCode)
-vim.keymap.set("n", "<C-LeftMouse>", "<LeftMouse><cmd>lua vim.lsp.buf.definition()<CR>", { silent = true, desc = "Go to definition" })
+vim.keymap.set(
+  "n",
+  "<C-LeftMouse>",
+  "<LeftMouse><cmd>lua vim.lsp.buf.definition()<CR>",
+  { silent = true, desc = "Go to definition" }
+)
 
 -- Left click release shows hover documentation if available (with VSCode-like delay)
-vim.keymap.set("n", "<LeftRelease>", function()
-  if #vim.lsp.get_clients({ bufnr = 0 }) > 0 then
-    local pos = vim.api.nvim_win_get_cursor(0)
-    local bufnr = vim.api.nvim_get_current_buf()
-    vim.defer_fn(function()
-      -- Only show hover if cursor hasn't moved
-      if vim.api.nvim_get_current_buf() == bufnr then
-        local new_pos = vim.api.nvim_win_get_cursor(0)
-        if pos[1] == new_pos[1] and pos[2] == new_pos[2] then
-          vim.lsp.buf.hover()
-        end
-      end
-    end, 500)
-  end
-end, { silent = true, desc = "Click and show hover" })
+-- vim.keymap.set("n", "<LeftRelease>", function()
+--   if #vim.lsp.get_clients({ bufnr = 0 }) > 0 then
+--     local pos = vim.api.nvim_win_get_cursor(0)
+--     local bufnr = vim.api.nvim_get_current_buf()
+--     vim.defer_fn(function()
+--       -- Only show hover if cursor hasn't moved
+--       if vim.api.nvim_get_current_buf() == bufnr then
+--         local new_pos = vim.api.nvim_win_get_cursor(0)
+--         if pos[1] == new_pos[1] and pos[2] == new_pos[2] then
+--           vim.lsp.buf.hover()
+--         end
+--       end
+--     end, 500)
+--   end
+-- end, { silent = true, desc = "Click and show hover" })
 
 -- Double-click select word and copy
 vim.keymap.set("n", "<2-LeftMouse>", 'viw"+y', { silent = true, desc = "Select word and copy" })
