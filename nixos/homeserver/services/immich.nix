@@ -1,7 +1,7 @@
 { config, ... }:
 let
   domain = "photos.tigor.web.id";
-  volume = "/var/mnt/wolf/immich";
+  volume = "/var/mnt/fenrir/immich";
   version = "release";
   inherit (config.virtualisation.oci-containers.containers.immich-server) ip httpPort;
   address = "http://${ip}:${toString httpPort}";
@@ -58,10 +58,10 @@ in
       "${volume}/valkey:/data"
     ];
     extraOptions = [
-      ''--health-cmd=valkey-cli ping | grep PONG''
-      ''--health-startup-cmd=valkey-cli ping | grep PONG''
-      ''--health-startup-interval=100ms''
-      ''--health-startup-retries=300'' # 30 second maximum wait.
+      "--health-cmd=valkey-cli ping | grep PONG"
+      "--health-startup-cmd=valkey-cli ping | grep PONG"
+      "--health-startup-interval=100ms"
+      "--health-startup-retries=300" # 30 second maximum wait.
     ];
   };
   systemd.services.podman-immich-valkey.preStart = # sh
@@ -82,10 +82,10 @@ in
       "${volume}/postgresql:/var/lib/postgresql/data"
     ];
     extraOptions = [
-      ''--health-cmd=pg_isready -U immich''
-      ''--health-startup-cmd=pg_isready -U immich''
-      ''--health-startup-interval=100ms''
-      ''--health-startup-retries=300'' # 30 second maximum wait.
+      "--health-cmd=pg_isready -U immich"
+      "--health-startup-cmd=pg_isready -U immich"
+      "--health-startup-interval=100ms"
+      "--health-startup-retries=300" # 30 second maximum wait.
     ];
   };
   systemd.services.podman-immich-postgres.preStart = # sh
