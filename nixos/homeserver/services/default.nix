@@ -4,7 +4,7 @@
     ./ytptube
 
     ./adguardhome.nix
-    ./attic.nix
+    # ./attic.nix
     ./auth.nix
     ./nginx.nix
     ./immich.nix
@@ -17,7 +17,6 @@
     ./suwayomi.nix
     ./flaresolverr.nix
     ./ntfy.nix
-    ./flexget.nix
     ./jdownloader.nix
     ./samba.nix
     ./qbittorrent.nix

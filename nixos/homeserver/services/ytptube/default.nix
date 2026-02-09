@@ -11,9 +11,6 @@ let
   downloadsDir = "/var/mnt/wolf/mediaserver/ytptube";
 in
 {
-  imports = [
-    ./subscribe.nix
-  ];
   virtualisation.oci-containers.containers.ytptube = {
     image = "ghcr.io/arabcoders/ytptube:latest";
     ip = "10.88.1.17";
