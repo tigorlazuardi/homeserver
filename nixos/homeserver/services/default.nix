@@ -17,6 +17,7 @@
     ./suwayomi.nix
     ./flaresolverr.nix
     ./ntfy.nix
+    ./apprise.nix
     ./jdownloader.nix
     ./samba.nix
     # ./qbittorrent.nix
