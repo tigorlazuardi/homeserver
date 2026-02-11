@@ -19,7 +19,8 @@
     ./ntfy.nix
     ./jdownloader.nix
     ./samba.nix
-    ./qbittorrent.nix
+    # ./qbittorrent.nix
+    ./smartd.nix
 
   ];
 }
