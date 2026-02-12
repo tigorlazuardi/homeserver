@@ -74,37 +74,37 @@
         };
       };
     };
-    adata = {
-      type = "disk";
-      device = "/dev/disk/by-id/nvme-ADATA_SX8200PNP_2L082L47182A";
-      content = {
-        type = "gpt";
-        partitions = {
-          root = {
-            size = "100%";
-            content = {
-              type = "btrfs";
-              extraArgs = [
-                "-f"
-                "-L"
-                "adata"
-              ];
-              subvolumes = {
-                "/data" = {
-                  mountOptions = [
-                    "noatime"
-                    "compress=zstd"
-                    "nofail"
-                  ];
-                  mountpoint = "/var/mnt/adata";
-                };
-                "/data/.snapshots" = { };
-              };
-            };
-          };
-        };
-      };
-    };
+    # adata = {
+    #   type = "disk";
+    #   device = "/dev/disk/by-id/nvme-ADATA_SX8200PNP_2L082L47182A";
+    #   content = {
+    #     type = "gpt";
+    #     partitions = {
+    #       root = {
+    #         size = "100%";
+    #         content = {
+    #           type = "btrfs";
+    #           extraArgs = [
+    #             "-f"
+    #             "-L"
+    #             "adata"
+    #           ];
+    #           subvolumes = {
+    #             "/data" = {
+    #               mountOptions = [
+    #                 "noatime"
+    #                 "compress=zstd"
+    #                 "nofail"
+    #               ];
+    #               mountpoint = "/var/mnt/adata";
+    #             };
+    #             "/data/.snapshots" = { };
+    #           };
+    #         };
+    #       };
+    #     };
+    #   };
+    # };
     # kyo = {
     #   type = "disk";
     #   device = "/dev/disk/by-id/nvme-K350-1TB_0004253001512";
