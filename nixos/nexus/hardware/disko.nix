@@ -26,7 +26,11 @@
             end = "-17G";
             content = {
               type = "btrfs";
-              extraArgs = [ "-f" "-L" "nexus" ];
+              extraArgs = [
+                "-f"
+                "-L"
+                "nexus"
+              ];
               subvolumes = {
                 "/root" = {
                   mountOptions = [ "noatime" ];
@@ -80,7 +84,11 @@
             size = "100%";
             content = {
               type = "btrfs";
-              extraArgs = [ "-f" "-L" "adata" ];
+              extraArgs = [
+                "-f"
+                "-L"
+                "adata"
+              ];
               subvolumes = {
                 "/data" = {
                   mountOptions = [
@@ -97,113 +105,125 @@
         };
       };
     };
-    kyo = {
-      type = "disk";
-      device = "/dev/disk/by-id/nvme-K350-1TB_0004253001512";
-      content = {
-        type = "gpt";
-        partitions = {
-          root = {
-            size = "100%";
-            content = {
-              type = "btrfs";
-              extraArgs = [ "-f" "-L" "kyo" ];
-              subvolumes = {
-                "/data" = {
-                  mountOptions = [
-                    "noatime"
-                    "compress=zstd"
-                    "nofail"
-                  ];
-                  mountpoint = "/var/mnt/kyo";
-                };
-                "/data/.snapshots" = { };
-              };
-            };
-          };
-        };
-      };
-    };
-    hgst = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-HGST_HTS721010A9E630_JR10004M3NZVHF";
-      content = {
-        type = "gpt";
-        partitions = {
-          root = {
-            size = "100%";
-            content = {
-              type = "btrfs";
-              extraArgs = [ "-f" "-L" "hgst" ];
-              subvolumes = {
-                "/data" = {
-                  mountOptions = [
-                    "noatime"
-                    "compress=zstd"
-                    "nofail"
-                  ];
-                  mountpoint = "/var/mnt/hgst";
-                };
-                "/data/.snapshots" = { };
-              };
-            };
-          };
-        };
-      };
-    };
-    wdc = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-WDC_WDS500G2B0A-00SM50_19432C802119";
-      content = {
-        type = "gpt";
-        partitions = {
-          root = {
-            size = "100%";
-            content = {
-              type = "btrfs";
-              extraArgs = [ "-f" "-L" "wdc" ];
-              subvolumes = {
-                "/data" = {
-                  mountOptions = [
-                    "noatime"
-                    "compress=zstd"
-                    "nofail"
-                  ];
-                  mountpoint = "/var/mnt/wdc";
-                };
-                "/data/.snapshots" = { };
-              };
-            };
-          };
-        };
-      };
-    };
-    vgen = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-V-GEN05SM23AR512INT_512GB_VGAR2023053000068434";
-      content = {
-        type = "gpt";
-        partitions = {
-          root = {
-            size = "100%";
-            content = {
-              type = "btrfs";
-              extraArgs = [ "-f" "-L" "vgen" ];
-              subvolumes = {
-                "/data" = {
-                  mountOptions = [
-                    "noatime"
-                    "compress=zstd"
-                    "nofail"
-                  ];
-                  mountpoint = "/var/mnt/vgen";
-                };
-                "/data/.snapshots" = { };
-              };
-            };
-          };
-        };
-      };
-    };
+    # kyo = {
+    #   type = "disk";
+    #   device = "/dev/disk/by-id/nvme-K350-1TB_0004253001512";
+    #   content = {
+    #     type = "gpt";
+    #     partitions = {
+    #       root = {
+    #         size = "100%";
+    #         content = {
+    #           type = "btrfs";
+    #           extraArgs = [ "-f" "-L" "kyo" ];
+    #           subvolumes = {
+    #             "/data" = {
+    #               mountOptions = [
+    #                 "noatime"
+    #                 "compress=zstd"
+    #                 "nofail"
+    #               ];
+    #               mountpoint = "/var/mnt/kyo";
+    #             };
+    #             "/data/.snapshots" = { };
+    #           };
+    #         };
+    #       };
+    #     };
+    #   };
+    # };
+    # hgst = {
+    #   type = "disk";
+    #   device = "/dev/disk/by-id/ata-HGST_HTS721010A9E630_JR10004M3NZVHF";
+    #   content = {
+    #     type = "gpt";
+    #     partitions = {
+    #       root = {
+    #         size = "100%";
+    #         content = {
+    #           type = "btrfs";
+    #           extraArgs = [
+    #             "-f"
+    #             "-L"
+    #             "hgst"
+    #           ];
+    #           subvolumes = {
+    #             "/data" = {
+    #               mountOptions = [
+    #                 "noatime"
+    #                 "compress=zstd"
+    #                 "nofail"
+    #               ];
+    #               mountpoint = "/var/mnt/hgst";
+    #             };
+    #             "/data/.snapshots" = { };
+    #           };
+    #         };
+    #       };
+    #     };
+    #   };
+    # };
+    # wdc = {
+    #   type = "disk";
+    #   device = "/dev/disk/by-id/ata-WDC_WDS500G2B0A-00SM50_19432C802119";
+    #   content = {
+    #     type = "gpt";
+    #     partitions = {
+    #       root = {
+    #         size = "100%";
+    #         content = {
+    #           type = "btrfs";
+    #           extraArgs = [
+    #             "-f"
+    #             "-L"
+    #             "wdc"
+    #           ];
+    #           subvolumes = {
+    #             "/data" = {
+    #               mountOptions = [
+    #                 "noatime"
+    #                 "compress=zstd"
+    #                 "nofail"
+    #               ];
+    #               mountpoint = "/var/mnt/wdc";
+    #             };
+    #             "/data/.snapshots" = { };
+    #           };
+    #         };
+    #       };
+    #     };
+    #   };
+    # };
+    # vgen = {
+    #   type = "disk";
+    #   device = "/dev/disk/by-id/ata-V-GEN05SM23AR512INT_512GB_VGAR2023053000068434";
+    #   content = {
+    #     type = "gpt";
+    #     partitions = {
+    #       root = {
+    #         size = "100%";
+    #         content = {
+    #           type = "btrfs";
+    #           extraArgs = [
+    #             "-f"
+    #             "-L"
+    #             "vgen"
+    #           ];
+    #           subvolumes = {
+    #             "/data" = {
+    #               mountOptions = [
+    #                 "noatime"
+    #                 "compress=zstd"
+    #                 "nofail"
+    #               ];
+    #               mountpoint = "/var/mnt/vgen";
+    #             };
+    #             "/data/.snapshots" = { };
+    #           };
+    #         };
+    #       };
+    #     };
+    #   };
+    # };
   };
 }
