@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   boot = {
     loader = {
       systemd-boot = {
-        enable = true;
+        enable = lib.mkDefault true;
         configurationLimit = 50;
         extraFiles = {
           # Disable the boot menu unless the user holds down a key

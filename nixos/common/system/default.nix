@@ -12,6 +12,7 @@
     ./neovim.nix
     ./nix.nix
     ./sops.nix
+    ./scripts.nix
     ./fonts.nix
   ];
 
