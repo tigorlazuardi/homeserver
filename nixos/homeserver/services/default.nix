@@ -22,6 +22,7 @@
     ./samba.nix
     # ./qbittorrent.nix
     ./smartd.nix
+    ./signoz.nix
 
   ];
 }
