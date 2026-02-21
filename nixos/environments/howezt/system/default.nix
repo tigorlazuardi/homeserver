@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./infisical.nix
+  ];
+}

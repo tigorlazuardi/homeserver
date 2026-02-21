@@ -6,6 +6,7 @@
     ./services
 
     ../environments/grandboard/system
+    ../environments/howezt/system
 
     ./locale.nix
     ./networking.nix
