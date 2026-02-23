@@ -10,5 +10,6 @@
     lsof
     statix
     typescript-go
+    biome
   ];
 }
