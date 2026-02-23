@@ -7,3 +7,6 @@ if vim.g.neovide then
   vim.g.neovide_window_blurred = true
   vim.g.experimental_layer_grouping = true
 end
+
+-- Enable this option to avoid conflicts with Prettier.
+vim.g.lazyvim_prettier_needs_config = true
