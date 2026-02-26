@@ -149,15 +149,15 @@
                 systemctl restart podman-${name}.service
               '';
             unitConfig = {
-              StartLimitIntervalSec = "1h";
-              StartLimitBurst = 5;
+              StartLimitIntervalSec = lib.mkDefault "1h";
+              StartLimitBurst = lib.mkDefault 5;
             };
             serviceConfig = {
-              Type = "simple";
-              Restart = "on-failure";
-              RestartSec = 5;
-              RestartSteps = 5;
-              RestartMaxDelaySec = 30;
+              Type = lib.mkDefault "simple";
+              Restart = lib.mkDefault "on-failure";
+              RestartSec = lib.mkDefault 5;
+              RestartSteps = lib.mkDefault 5;
+              RestartMaxDelaySec = lib.mkDefault 30;
             };
           }
         ) autoUpdateContainers;

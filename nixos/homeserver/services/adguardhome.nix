@@ -291,7 +291,7 @@ in
       fi
     '';
     serviceConfig = {
-      Restart = "always";
+      Restart = lib.mkForce "always";
       RestartSec = "5s";
     };
   };

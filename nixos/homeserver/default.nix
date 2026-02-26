@@ -7,6 +7,7 @@
 
     ../environments/grandboard/system
     ../environments/howezt/system
+    ../environments/planet-melon/system
 
     ./locale.nix
     ./networking.nix

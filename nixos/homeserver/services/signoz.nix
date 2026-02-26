@@ -190,8 +190,6 @@ in
     serviceConfig = {
       Type = lib.mkForce "oneshot";
       RemainAfterExit = true;
-      Restart = lib.mkForce "on-failure";
-      RestartSec = 5;
     };
   };
 
@@ -220,8 +218,6 @@ in
     serviceConfig = {
       Type = lib.mkForce "oneshot";
       RemainAfterExit = true;
-      Restart = lib.mkForce "on-failure";
-      RestartSec = 5;
     };
   };
 

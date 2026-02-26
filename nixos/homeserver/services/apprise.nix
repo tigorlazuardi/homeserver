@@ -38,15 +38,8 @@ in
     ];
   };
 
-  systemd.services.podman-apprise = {
-    preStart = ''
-      mkdir -p ${mountDir}/config ${mountDir}/plugin ${mountDir}/attach
-      chown -R 1000:1000 ${mountDir}
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
-
+  systemd.services.podman-apprise.preStart = ''
+    mkdir -p ${mountDir}/config ${mountDir}/plugin ${mountDir}/attach
+    chown -R 1000:1000 ${mountDir}
+  '';
 }

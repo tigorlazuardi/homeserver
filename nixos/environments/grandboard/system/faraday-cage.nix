@@ -107,10 +107,6 @@ in
       StartLimitIntervalSec = "30s";
       StartLimitBurst = "3";
     };
-    serviceConfig = {
-      Restart = "on-failure";
-      RestartSec = "2s";
-    };
   };
 
   services.webhook.hooks."deploy-${name}" = {

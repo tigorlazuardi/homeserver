@@ -27,16 +27,10 @@ in
     };
   };
 
-  systemd.services.podman-navidrome = {
-    preStart = ''
-      mkdir -p ${dataDir}
-      chown 1000:1000 ${dataDir}
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.podman-navidrome.preStart = ''
+    mkdir -p ${dataDir}
+    chown 1000:1000 ${dataDir}
+  '';
 
   services.nginx.virtualHosts.${domain} = {
     forceSSL = true;

@@ -148,12 +148,7 @@ in
     autoStart = false;
     extraOptions = [ "--restart=no" ];
   };
-  systemd.services.podman-plane-migrator = {
-    serviceConfig = {
-      Restart = lib.mkForce "no";
-      RemainAfterExit = true;
-    };
-  };
+  systemd.services.podman-plane-migrator.serviceConfig.RemainAfterExit = true;
 
   # API Service
   virtualisation.oci-containers.containers.plane-api = {

@@ -11,9 +11,4 @@
       LOG_LEVEL = "info";
     };
   };
-
-  systemd.services.podman-flaresolverr.serviceConfig = {
-    Restart = "always";
-    RestartSec = "5s";
-  };
 }

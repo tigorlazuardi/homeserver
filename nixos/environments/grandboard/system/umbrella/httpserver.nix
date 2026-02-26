@@ -54,10 +54,6 @@ in
       StartLimitIntervalSec = "30s";
       StartLimitBurst = "3";
     };
-    serviceConfig = {
-      Restart = "on-failure";
-      RestartSec = "2s";
-    };
   };
   services.webhook.hooks."deploy-${name}" = {
     execute-command = "${pkgs.writeShellScript "deploy-umbrella.docs.sh" "${pkgs.systemd}/bin/systemctl restart podman-${name}-update.service"}";

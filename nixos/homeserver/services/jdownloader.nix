@@ -25,16 +25,10 @@ in
     };
   };
 
-  systemd.services.podman-jdownloader = {
-    preStart = ''
-      mkdir -p ${configDir} ${outputDir}
-      chown -R 1000:1000 ${configDir} ${outputDir}
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.podman-jdownloader.preStart = ''
+    mkdir -p ${configDir} ${outputDir}
+    chown -R 1000:1000 ${configDir} ${outputDir}
+  '';
 
   services.nginx.virtualHosts.${domain} = {
     forceSSL = true;

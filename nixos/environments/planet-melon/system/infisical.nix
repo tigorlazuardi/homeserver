@@ -4,9 +4,9 @@
   ...
 }:
 let
-  namespace = "howezt";
-  domain = "infisical.howezt.com";
-  volume = "/var/mnt/state/howezt/infisical";
+  namespace = "planet-melon";
+  domain = "infisical.planetmelon.space";
+  volume = "/var/mnt/state/planet-melon/infisical";
   version = "v0.158.4";
 
   containerName = name: "infisical-${namespace}-${name}";
@@ -41,7 +41,7 @@ in
   # PostgreSQL for Infisical
   virtualisation.oci-containers.containers.${postgres.name} = {
     image = "docker.io/postgres:14-alpine";
-    ip = "10.88.7.1";
+    ip = "10.88.8.1";
     podman.sdnotify = "healthy";
     volumes = [
       "${volume}/postgres:/var/lib/postgresql/data"
@@ -67,7 +67,7 @@ in
   # Redis for Infisical
   virtualisation.oci-containers.containers.${redis.name} = {
     image = "docker.io/redis:7-alpine";
-    ip = "10.88.7.2";
+    ip = "10.88.8.2";
     podman.sdnotify = "healthy";
     volumes = [
       "${volume}/redis:/data"
@@ -89,7 +89,7 @@ in
   # Infisical Backend
   virtualisation.oci-containers.containers.${backend.name} = {
     image = "docker.io/infisical/infisical:${version}";
-    ip = "10.88.7.3";
+    ip = "10.88.8.3";
     httpPort = 8080;
     podman.sdnotify = "healthy";
     dependsOn = [
@@ -125,19 +125,14 @@ in
     ];
   };
 
-  # ACME certificate for howezt.com
-  security.acme.certs."howezt.com" = {
-    webroot = "/var/lib/acme/acme-challenge";
-    group = "nginx";
-    extraDomainNames = [
-      domain
-    ];
-  };
+  security.acme.certs."planetmelon.space".extraDomainNames = [
+    domain
+  ];
 
   services.nginx.virtualHosts = {
     "${domain}" = {
       forceSSL = true;
-      useACMEHost = "howezt.com";
+      useACMEHost = "planetmelon.space";
       locations."/" = {
         proxyPass = "http://${backend.ip}:${toString backend.httpPort}";
         extraConfig = ''

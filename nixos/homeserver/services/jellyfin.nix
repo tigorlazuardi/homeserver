@@ -30,16 +30,10 @@ in
     };
   };
 
-  systemd.services.podman-jellyfin = {
-    preStart = ''
-      mkdir -p ${configDir} ${cacheDir}
-      chown -R 1000:1000 /var/mnt/state/jellyfin
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.podman-jellyfin.preStart = ''
+    mkdir -p ${configDir} ${cacheDir}
+    chown -R 1000:1000 /var/mnt/state/jellyfin
+  '';
 
   services.nginx.virtualHosts.${domain} = {
     forceSSL = true;

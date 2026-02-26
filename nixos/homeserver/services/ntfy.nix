@@ -38,16 +38,10 @@ in
     ];
   };
 
-  systemd.services.podman-ntfy = {
-    preStart = ''
-      mkdir -p ${mountDir}
-      chown 1000:1000 ${mountDir}
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.podman-ntfy.preStart = ''
+    mkdir -p ${mountDir}
+    chown 1000:1000 ${mountDir}
+  '';
 
   services.nginx.virtualHosts.${domain} = {
     forceSSL = true;

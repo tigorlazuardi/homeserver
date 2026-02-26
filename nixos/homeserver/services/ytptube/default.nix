@@ -29,16 +29,10 @@ in
     };
   };
 
-  systemd.services.podman-ytptube = {
-    preStart = ''
-      mkdir -p ${configDir} ${downloadsDir}
-      chown 1000:1000 ${configDir} ${downloadsDir}
-    '';
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.podman-ytptube.preStart = ''
+    mkdir -p ${configDir} ${downloadsDir}
+    chown 1000:1000 ${configDir} ${downloadsDir}
+  '';
 
   services.nginx.virtualHosts.${domain} = {
     forceSSL = true;
