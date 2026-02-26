@@ -11,5 +11,7 @@
     statix
     typescript-go
     biome
+    unzip
+    go
   ];
 }
