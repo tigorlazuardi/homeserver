@@ -70,6 +70,7 @@ in
     environment = {
       VIKUNJA_SERVICE_PUBLICURL = "https://${domain}";
       VIKUNJA_SERVICE_ENABLEREGISTRATION = "false";
+      VIKUNJA_SERVICE_JWTTTLLONG = "31536000"; # 1 year, for long-lived tokens (MCP, etc.)
       VIKUNJA_DATABASE_TYPE = "postgres";
       VIKUNJA_DATABASE_HOST = "${postgres.ip}:${toString postgres.port}";
       VIKUNJA_DATABASE_DATABASE = postgres.db;
