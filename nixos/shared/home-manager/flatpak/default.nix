@@ -11,6 +11,7 @@
     ./slack.nix
     ./spotify.nix
     ./vesktop.nix
+    ./obsidian.nix
     # ./vivaldi.nix
     ./whatsapp.nix
     ./zoom.nix
