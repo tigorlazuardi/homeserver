@@ -80,3 +80,12 @@ vim.keymap.set("n", "<A-ScrollWheelDown>", "4zl", { silent = true, desc = "Scrol
 
 -- Scroll unfocused splits (mousefocus enables this)
 vim.opt.mousefocus = true
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
+  callback = function()
+    vim.opt_local.tabstop = 4
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.expandtab = true
+  end,
+})
