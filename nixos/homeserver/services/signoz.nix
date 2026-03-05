@@ -320,6 +320,18 @@ in
       forceSSL = true;
       locations."/" = {
         proxyPass = otlpAddress;
+        extraConfig = /* nginx */ ''
+          if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization';
+            add_header 'Access-Control-Max-Age' 86400;
+            return 204;
+          }
+          add_header 'Access-Control-Allow-Origin' '*' always;
+          add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS' always;
+          add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+        '';
       };
     };
   };
