@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   domain = "plane.tigor.web.id";
   volume = "/var/mnt/state/plane";
@@ -45,7 +45,7 @@ let
 
     # MinIO
     USE_MINIO = "1";
-    AWS_S3_ENDPOINT_URL = "http://${ips.minio}:9000";
+    AWS_S3_ENDPOINT_URL = "https://minio-plane.tigor.web.id";
     AWS_S3_BUCKET_NAME = "uploads";
     BUCKET_NAME = "uploads";
     FILE_SIZE_LIMIT = "26214400"; # 25MB
@@ -151,6 +151,25 @@ in
   systemd.services.podman-plane-minio.preStart = ''
     mkdir -p ${volume}/minio
   '';
+
+  # MinIO bucket initialization
+  systemd.services.plane-minio-init = {
+    description = "Create MinIO bucket for Plane";
+    after = [ "podman-plane-minio.service" ];
+    requires = [ "podman-plane-minio.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    environment.HOME = "/tmp";
+    path = [ pkgs.minio-client ];
+    script = ''
+      mc alias set plane-minio http://${ips.minio}:9000 plane planeminio
+      mc mb --ignore-existing plane-minio/uploads
+      mc anonymous set download plane-minio/uploads
+    '';
+  };
 
   # Migrator Service (runs database migrations)
   virtualisation.oci-containers.containers.plane-migrator = {
@@ -352,11 +371,17 @@ in
     };
   };
 
-  # MinIO Console (Web UI)
+  # MinIO S3 API (public, for presigned URL uploads)
   services.nginx.virtualHosts."minio-plane.tigor.web.id" = {
     forceSSL = true;
     locations."/" = {
-      proxyPass = "http://${ips.minio}:9090";
+      proxyPass = "http://${ips.minio}:9000";
+      extraConfig = ''
+        client_max_body_size 50M;
+      '';
+    };
+    locations."/console/" = {
+      proxyPass = "http://${ips.minio}:9090/";
       proxyWebsockets = true;
     };
   };
