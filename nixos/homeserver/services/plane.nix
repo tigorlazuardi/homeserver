@@ -134,10 +134,9 @@ in
     ip = ips.minio;
     podman.sdnotify = "healthy";
     cmd = [ "server" "/export" "--console-address" ":9090" ];
-    environment = {
-      MINIO_ROOT_USER = "plane";
-      MINIO_ROOT_PASSWORD = "planeminio";
-    };
+    environmentFiles = [
+      config.sops.secrets."homeserver/plane.env".path
+    ];
     volumes = [
       "${volume}/minio:/export"
     ];
@@ -161,11 +160,12 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      EnvironmentFile = config.sops.secrets."homeserver/plane.env".path;
     };
     environment.HOME = "/tmp";
     path = [ pkgs.minio-client ];
     script = ''
-      mc alias set plane-minio http://${ips.minio}:9000 plane planeminio
+      mc alias set plane-minio http://${ips.minio}:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
       mc mb --ignore-existing plane-minio/uploads
       mc anonymous set download plane-minio/uploads
     '';
@@ -366,8 +366,11 @@ in
       proxyWebsockets = true;
     };
 
-    locations."/uploads/" = {
-      proxyPass = "http://${ips.minio}:9000/uploads/";
+    locations."/uploads" = {
+      proxyPass = "http://${ips.minio}:9000/uploads";
+      extraConfig = ''
+        client_max_body_size 50M;
+      '';
     };
   };
 
