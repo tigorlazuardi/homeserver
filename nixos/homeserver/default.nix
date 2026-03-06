@@ -5,7 +5,7 @@
     ./programs
     ./services
 
-    ../environments/grandboard/system
+    # ../environments/grandboard/system
     ../environments/howezt/system
     ../environments/planet-melon/system
 
