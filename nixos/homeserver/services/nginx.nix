@@ -207,22 +207,6 @@
               return 301 https://github.com/tigorlazuardi;
           }
 
-          # Catch all server. Return 444 for all requests (end connection without response)
-          server {
-              listen 0.0.0.0:80 default_server;
-              listen [::0]:80 default_server;
-              server_name _;
-              return 444;
-          }
-          server {
-              listen 0.0.0.0:443 ssl default_server;
-              listen [::0]:443 ssl default_server;
-              server_name _;
-              ssl_certificate /var/lib/acme/tigor.web.id/fullchain.pem;
-              ssl_certificate_key /var/lib/acme/tigor.web.id/key.pem;
-              ssl_reject_handshake on; # Reject SSL connection
-              return 444;
-          }
         '';
       security.acme = {
         acceptTerms = true;
