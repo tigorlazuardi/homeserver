@@ -23,6 +23,7 @@
     # ./qbittorrent.nix
     ./smartd.nix
     ./signoz.nix
+    ./plane.nix
 
   ];
 }
