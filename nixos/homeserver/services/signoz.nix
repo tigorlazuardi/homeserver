@@ -79,6 +79,27 @@ let
       send_batch_max_size = 11000;
       timeout = "10s";
     };
+    processors.transform = {
+      trace_statements = [{
+        context = "span";
+        statements = [
+          ''replace_all_patterns(attributes, "value", "(?i)\"password\"\\s*:\\s*\"[^\"]*\"", "\"password\":\"***\"")''
+          ''replace_all_patterns(attributes, "value", "(?i)\"authorization\"\\s*:\\s*\"[^\"]*\"", "\"authorization\":\"***\"")''
+          ''replace_all_patterns(attributes, "value", "(?i)\"x-api-key\"\\s*:\\s*\"[^\"]*\"", "\"x-api-key\":\"***\"")''
+        ];
+      }];
+      log_statements = [{
+        context = "log";
+        statements = [
+          ''replace_pattern(body, "(?i)\"password\"\\s*:\\s*\"[^\"]*\"", "\"password\":\"***\"")''
+          ''replace_pattern(body, "(?i)\"authorization\"\\s*:\\s*\"[^\"]*\"", "\"authorization\":\"***\"")''
+          ''replace_pattern(body, "(?i)\"x-api-key\"\\s*:\\s*\"[^\"]*\"", "\"x-api-key\":\"***\"")''
+          ''replace_all_patterns(attributes, "value", "(?i)\"password\"\\s*:\\s*\"[^\"]*\"", "\"password\":\"***\"")''
+          ''replace_all_patterns(attributes, "value", "(?i)\"authorization\"\\s*:\\s*\"[^\"]*\"", "\"authorization\":\"***\"")''
+          ''replace_all_patterns(attributes, "value", "(?i)\"x-api-key\"\\s*:\\s*\"[^\"]*\"", "\"x-api-key\":\"***\"")''
+        ];
+      }];
+    };
     exporters = {
       clickhousetraces = {
         datasource = "tcp://signoz-clickhouse:9000/signoz_traces";
@@ -97,7 +118,7 @@ let
     service.pipelines = {
       traces = {
         receivers = [ "otlp" ];
-        processors = [ "batch" ];
+        processors = [ "transform" "batch" ];
         exporters = [ "clickhousetraces" ];
       };
       metrics = {
@@ -107,7 +128,7 @@ let
       };
       logs = {
         receivers = [ "otlp" ];
-        processors = [ "batch" ];
+        processors = [ "transform" "batch" ];
         exporters = [ "clickhouselogsexporter" ];
       };
     };
