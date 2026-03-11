@@ -22,6 +22,7 @@
     ../../shared/home-manager/winboat.nix
 
     ./ssh.nix
+    ./typescript.nix
   ];
 
   # KDE Connect indicator in system tray (enabled if NixOS level is enabled)
