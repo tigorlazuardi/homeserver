@@ -44,13 +44,12 @@ return {
   },
   {
     "mfussenegger/nvim-lint",
-    opts = {
-      linters = {
-        golangcilint = {
-          -- use default args from nvim-lint (auto-detects v1/v2)
-          -- global config ~/.golangci.yml is auto-discovered
-        },
-      },
-    },
+    opts = function(_, opts)
+      -- disable golangci-lint integrated by lazyvim
+      opts = opts or {}
+      opts.linters_by_ft = opts.linters_by_ft or {}
+      opts.linters_by_ft.go = {}
+      return opts
+    end,
   },
 }
