@@ -1,5 +1,3 @@
-local home = os.getenv("HOME")
-
 return {
   {
     "neovim/nvim-lspconfig",
