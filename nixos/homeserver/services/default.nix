@@ -24,6 +24,7 @@
     ./smartd.nix
     ./signoz.nix
     ./plane.nix
+    ./sukhoi-booth9.nix
 
   ];
 }
