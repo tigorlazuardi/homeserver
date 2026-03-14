@@ -38,12 +38,39 @@ let
       glm = "opencode/glm-5";
       mimo = "opencode/mimo-v2-flash-free";
       haiku = "opencode/claude-haiku-4-5";
+      sonnet = "opencode/claude-sonnet-4-6";
+      codex = "opencode/gpt-5.3-codex";
     };
     routing = [
       {
-        name = "critical-fixes";
-        match.labels = [ "critical" ];
+        name = "opus";
+        match.labels = [ "opus" ];
         model = "opus";
+      }
+      {
+        name = "typical-label";
+        match.labels = [ "typical" ];
+        model = "mimo";
+      }
+      {
+        name = "sonnet";
+        match.labels = [ "sonnet" ];
+        model = "sonnet";
+      }
+      {
+        name = "codex";
+        match.labels = [ "codex" ];
+        model = "codex";
+      }
+      {
+        name = "glm";
+        match.labels = [ "glm" ];
+        model = "glm";
+      }
+      {
+        name = "haiku";
+        match.labels = [ "haiku" ];
+        model = "haiku";
       }
       {
         name = "complex-tasks";
