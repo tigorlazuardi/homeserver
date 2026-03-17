@@ -20,7 +20,7 @@
     ./apprise.nix
     ./jdownloader.nix
     ./samba.nix
-    # ./qbittorrent.nix
+    ./qbittorrent.nix
     ./smartd.nix
     ./signoz.nix
     ./plane.nix
