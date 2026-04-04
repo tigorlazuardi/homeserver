@@ -34,9 +34,9 @@ in
       UPDATE_EXCLUDE_STARTED = "false";
       FLARESOLVERR_ENABLED = "true";
       FLARESOLVERR_URL = "http://flaresolverr:8191";
-      EXTENSION_REPOS = builtins.toJSON [
-        "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json"
-      ];
+      # EXTENSION_REPOS = builtins.toJSON [
+      #   "https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json"
+      # ];
     };
   };
 
