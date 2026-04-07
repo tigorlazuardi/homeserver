@@ -12,18 +12,11 @@
     };
 
   home.packages = with pkgs; [
-    (symlinkJoin {
-      name = "opencode";
-      paths = [
-        opencode
-        coreutils
-        (writeShellScriptBin "opencode" ''
-          export PLANE_TIGOR_API_KEY=''$(cat ${config.sops.secrets."opencode/PLANE_TIGOR_API_KEY".path})
-          export VIKUNJA_API_TOKEN=''$(cat ${config.sops.secrets."opencode/VIKUNJA_API_TOKEN".path})
-          ${opencode}/bin/opencode "$@"
-        '')
-      ];
-    })
+    (writeShellScriptBin "opencode" ''
+      export PLANE_TIGOR_API_KEY=''$(cat ${config.sops.secrets."opencode/PLANE_TIGOR_API_KEY".path})
+      export VIKUNJA_API_TOKEN=''$(cat ${config.sops.secrets."opencode/VIKUNJA_API_TOKEN".path})
+      ${opencode}/bin/opencode "$@"
+    '')
     uv # For uvx
     nodejs # for npx
     ripgrep # Fast search (rg)
