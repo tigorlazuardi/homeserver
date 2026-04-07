@@ -1,0 +1,18 @@
+opencode:
+    PLANE_TIGOR_API_KEY: ENC[AES256_GCM,data:X6RMBDxto2MyzQzuuopnTLD1FqjrfjffB9/uRZ0L6dccRdAcmUP4TuVo,iv:0nD/7SbX/5nTgSZ0xAKigjrGO9YTJYWV/XecmuKBWg0=,tag:jIPR9BcCVumLOQRBSJwtfw==,type:str]
+    VIKUNJA_API_TOKEN: ENC[AES256_GCM,data:Gn4I34l6qbAZ+do4dsBUC0XRffj5jyRgGEFlZ4PlJdzDl/pRzsBa99we6Q==,iv:yQWtmEcHMCY5ky7CimqBbsmJXcxj5uzUNZG4+PeD6jY=,tag:kYo0H9k6oV5Yzpgu/A/UUQ==,type:str]
+sops:
+    age:
+        - recipient: age1tjtug6ja4pdadescfw0kkyvrn96dy6325v5p6gxx4g7z2d9cxqgs899653
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBDRGpCV1p1TVdMKzJMZEts
+            ZTBkZjlDTTlQS3BOUnhJcEU2OVd5Z090TjJnCjk0TkpMSWN4USs3K0JRSFFiL2lv
+            V0lIMkduY0RkWlgyaTl3eUtGUXlRTzQKLS0tIEpIOUR1WUtTRnZUOWhoK1NiSUtK
+            VEt0Vm5tcHBMYUo0WlhHZVg1dlhXMVUKqAt833NS8Jl8K/RCnovUZjltMLXpZXf1
+            DZD8tv8Icd16LWmM72hwIXjn1HzUqwMvyth+wLn/Ufg8FvQ6kYvGUQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-07T03:12:02Z"
+    mac: ENC[AES256_GCM,data:Ece4b7kB5mZwjHjEAtG25PaMG1zVIRVF7OSB2DuRzfzimxlJgkUPM/rQxyIhOfOAy4PrdodWM+KpQqsm9ZppGPn6W+gbeF2/2EomRNbEpBCQJnUIbps8Zo9R9el1OhH48DRGFdJXALoN+5GNJi694J83VUTF9R/wKGL0QR8hms4=,iv:U/iLsLkAKmzuqKrBdBjpE7kVamAvo9g+fJCDIRnHYu8=,tag:PBdKRIhFn2fzBCyw/swqjA==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2

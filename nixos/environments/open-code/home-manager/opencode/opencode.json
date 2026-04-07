@@ -1,0 +1,60 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openai/gpt-5.4",
+  "default_agent": "orchestrate",
+  "permission": "allow",
+  "mcp": {
+    "vikunja": {
+      "type": "local",
+      "environment": {
+        "VIKUNJA_URL": "https://vikunja.planetmelon.space",
+        "VIKUNJA_API_TOKEN": "{env:VIKUNJA_API_TOKEN}"
+      },
+      "command": [
+        "npx",
+        "-y",
+        "@0xk3vin/vikunja-mcp"
+      ],
+      "enabled": true
+    },
+    "plane-howezt": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "plane-mcp-server",
+        "stdio"
+      ],
+      "environment": {
+        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+        "PLANE_WORKSPACE_SLUG": "howezt",
+        "PLANE_BASE_URL": "https://plane.tigor.web.id"
+      }
+    },
+    "plane-planet-melon": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "plane-mcp-server",
+        "stdio"
+      ],
+      "environment": {
+        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+        "PLANE_WORKSPACE_SLUG": "planet-melon",
+        "PLANE_BASE_URL": "https://plane.tigor.web.id"
+      }
+    },
+    "plane-tigor": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "plane-mcp-server",
+        "stdio"
+      ],
+      "environment": {
+        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+        "PLANE_WORKSPACE_SLUG": "tigor",
+        "PLANE_BASE_URL": "https://plane.tigor.web.id"
+      }
+    }
+  }
+}
