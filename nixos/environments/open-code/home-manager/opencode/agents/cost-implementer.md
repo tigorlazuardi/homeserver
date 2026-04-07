@@ -3,7 +3,6 @@ description: Low-cost subagent for implementation, edits, and follow-up fixes.
 mode: subagent
 model: minimax-coding-plan/MiniMax-M2.7-highspeed
 temperature: 0.1
-steps: 10
 hidden: true
 ---
 

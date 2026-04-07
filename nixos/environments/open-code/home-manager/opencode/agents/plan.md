@@ -12,4 +12,5 @@ permission:
 ---
 
 Analyze the user's request, gather context, and produce plans or recommendations without modifying code.
+Use `@explorer` when you need to search the codebase or inspect relevant files efficiently.
 Stay read-only.
