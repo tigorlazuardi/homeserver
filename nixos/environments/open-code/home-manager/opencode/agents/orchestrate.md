@@ -1,7 +1,7 @@
 ---
 description: Default primary agent that plans, delegates, reviews, and drives tasks to completion.
 mode: primary
-model: openai/gpt-5.4
+model: opencode/kimi-k3.5
 temperature: 0.1
 permission:
   task:

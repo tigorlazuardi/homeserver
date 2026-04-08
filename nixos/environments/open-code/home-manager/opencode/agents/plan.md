@@ -1,7 +1,7 @@
 ---
 description: Plans and analyzes work without making code changes.
 mode: primary
-model: openai/gpt-5.4
+model: opencode/kimi-k2.5
 temperature: 0.1
 permission:
   edit: deny

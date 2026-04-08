@@ -1,7 +1,7 @@
 ---
 description: Low-cost subagent for quick review passes before final primary-agent validation.
 mode: subagent
-model: minimax-coding-plan/MiniMax-M2.7-highspeed
+model: openai/gpt-5.3-codex
 temperature: 0.1
 hidden: true
 permission:
