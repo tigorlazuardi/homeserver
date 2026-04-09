@@ -1,7 +1,7 @@
 ---
 description: Primary code review agent for validating correctness, regressions, and missing tests.
 mode: primary
-model: opencode/kimi-k2.5
+model: openai/gpt-5.4
 temperature: 0.1
 permission:
   edit: deny
