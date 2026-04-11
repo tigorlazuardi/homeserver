@@ -19,6 +19,8 @@
       "type": "local",
       "command": [
         "uvx",
+        "--with",
+        "fakeredis<2.35.0",
         "plane-mcp-server",
         "stdio"
       ],
@@ -32,6 +34,8 @@
       "type": "local",
       "command": [
         "uvx",
+        "--with",
+        "fakeredis<2.35.0",
         "plane-mcp-server",
         "stdio"
       ],
@@ -45,6 +49,8 @@
       "type": "local",
       "command": [
         "uvx",
+        "--with",
+        "fakeredis<2.35.0",
         "plane-mcp-server",
         "stdio"
       ],

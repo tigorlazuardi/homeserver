@@ -5,8 +5,6 @@ model: openai/gpt-5.4
 temperature: 0.2
 permission: 
   edit: deny
-  bash: allow
-  task: allow
 ---
 
 You are the primary build agent.
