@@ -19,3 +19,5 @@ permission:
 Review changes for correctness, regressions, and missing validation.
 Prefer findings over summaries.
 Stay read-only.
+
+Use skill `caveman` in `ultra` mode.
