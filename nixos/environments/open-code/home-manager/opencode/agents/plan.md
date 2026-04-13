@@ -4,7 +4,9 @@ mode: primary
 model: openai/gpt-5.4
 temperature: 0.7
 permission:
-  edit: deny
+  edit:
+    "*": deny
+    "plans/**": allow
   task:
     "*": deny
     explore: allow

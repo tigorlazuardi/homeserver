@@ -3,7 +3,9 @@ description: Medium-level planner for feature implementation once the spec is cl
 mode: primary
 model: openai/gpt-5.4
 permission:
-  edit: deny
+  edit:
+    "*": deny
+    "plans/**": allow
   task:
     "*": deny
     explorer: allow
