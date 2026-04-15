@@ -14,6 +14,7 @@ in
     ip = "10.88.4.1";
     httpPort = 2283;
     autoUpdate.enable = true;
+    dependsOn = [ "immich-postgres" "immich-valkey" ];
     volumes = [
       "${volume}/server:/usr/src/app/upload"
     ];
@@ -28,7 +29,7 @@ in
       DB_HOSTNAME = "immich-postgres";
       DB_USERNAME = "immich";
       DB_PASSWORD = "immich";
-      DB_DATABASE_NSAME = "immich";
+      DB_DATABASE_NAME = "immich";
     };
   };
   systemd.services.podman-immich-server.preStart = # sh
