@@ -83,6 +83,7 @@ in
       "${volume}/postgresql:/var/lib/postgresql/data"
     ];
     extraOptions = [
+      "--shm-size=128mb"
       "--health-cmd=pg_isready -U immich"
       "--health-startup-cmd=pg_isready -U immich"
       "--health-startup-interval=100ms"
