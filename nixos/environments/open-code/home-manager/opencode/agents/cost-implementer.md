@@ -1,6 +1,7 @@
 ---
 description: Low-cost subagent for implementation, edits, and follow-up fixes.
 mode: subagent
+disable: true
 model: openai/gpt-5.4-mini
 temperature: 0.1
 hidden: true

@@ -2,6 +2,7 @@
 description: A powerful standalone implementation primary agent for explicit user-invoked execution without delegation.
 mode: primary
 model: openai/gpt-5.4
+disable: true
 permission:
   task: deny
 ---

@@ -1,6 +1,7 @@
 ---
 description: Fast exploration subagent for searching the codebase and gathering context without making changes.
 mode: subagent
+disable: true
 model: minimax-coding-plan/MiniMax-M2.7-highspeed
 temperature: 0.1
 hidden: true

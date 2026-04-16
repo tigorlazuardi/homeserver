@@ -2,6 +2,7 @@
 description: Primary code review agent for validating correctness, regressions, and missing tests.
 mode: primary
 model: openai/gpt-5.4
+disable: true
 temperature: 0.1
 permission:
   edit: deny

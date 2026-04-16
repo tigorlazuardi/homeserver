@@ -2,6 +2,7 @@
 description: Medium-level planner for feature implementation once the spec is clear, bridging high-level planning and actual code implementation.
 mode: primary
 model: openai/gpt-5.4
+disable: true
 permission:
   edit:
     "*": deny
