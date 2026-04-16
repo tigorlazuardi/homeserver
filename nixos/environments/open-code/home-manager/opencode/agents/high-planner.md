@@ -6,7 +6,7 @@ temperature: 0.7
 permission:
   edit:
     "*": deny
-    "plans/**": allow
+    "plans/*": allow
   task:
     "*": deny
     explore: allow
