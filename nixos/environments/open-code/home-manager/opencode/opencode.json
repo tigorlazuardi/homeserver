@@ -2,19 +2,19 @@
   "$schema": "https://opencode.ai/config.json",
   "permission": "allow",
   "mcp": {
-    "vikunja": {
-      "type": "local",
-      "environment": {
-        "VIKUNJA_URL": "https://vikunja.planetmelon.space",
-        "VIKUNJA_API_TOKEN": "{env:VIKUNJA_API_TOKEN}"
-      },
-      "command": [
-        "npx",
-        "-y",
-        "@0xk3vin/vikunja-mcp"
-      ],
-      "enabled": true
-    },
+    // "vikunja": {
+    //   "type": "local",
+    //   "environment": {
+    //     "VIKUNJA_URL": "https://vikunja.planetmelon.space",
+    //     "VIKUNJA_API_TOKEN": "{env:VIKUNJA_API_TOKEN}"
+    //   },
+    //   "command": [
+    //     "npx",
+    //     "-y",
+    //     "@0xk3vin/vikunja-mcp"
+    //   ],
+    //   "enabled": true
+    // },
     "plane-howezt": {
       "type": "local",
       "command": [
