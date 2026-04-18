@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   imports = [
     ./hardware
@@ -23,6 +23,11 @@
     extraSpecialArgs = { inherit inputs; };
     backupFileExtension = "bak";
   };
+
+  environment.systemPackages = with pkgs; [
+    rclone
+    rsync
+  ];
 
   system.stateVersion = "25.11";
 }
