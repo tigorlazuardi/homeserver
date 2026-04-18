@@ -60,5 +60,8 @@
         "PLANE_BASE_URL": "https://plane.tigor.web.id"
       }
     }
-  }
+  },
+  "plugin": [
+    "@tarquinen/opencode-dcp@latest"
+  ]
 }
