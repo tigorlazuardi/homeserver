@@ -15,51 +15,51 @@
     //   ],
     //   "enabled": true
     // },
-    "plane-howezt": {
-      "type": "local",
-      "command": [
-        "uvx",
-        "--with",
-        "fakeredis<2.35.0",
-        "plane-mcp-server",
-        "stdio"
-      ],
-      "environment": {
-        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
-        "PLANE_WORKSPACE_SLUG": "howezt",
-        "PLANE_BASE_URL": "https://plane.tigor.web.id"
-      }
-    },
-    "plane-planet-melon": {
-      "type": "local",
-      "command": [
-        "uvx",
-        "--with",
-        "fakeredis<2.35.0",
-        "plane-mcp-server",
-        "stdio"
-      ],
-      "environment": {
-        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
-        "PLANE_WORKSPACE_SLUG": "planet-melon",
-        "PLANE_BASE_URL": "https://plane.tigor.web.id"
-      }
-    },
-    "plane-tigor": {
-      "type": "local",
-      "command": [
-        "uvx",
-        "--with",
-        "fakeredis<2.35.0",
-        "plane-mcp-server",
-        "stdio"
-      ],
-      "environment": {
-        "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
-        "PLANE_WORKSPACE_SLUG": "tigor",
-        "PLANE_BASE_URL": "https://plane.tigor.web.id"
-      }
-    }
+    // "plane-howezt": {
+    //   "type": "local",
+    //   "command": [
+    //     "uvx",
+    //     "--with",
+    //     "fakeredis<2.35.0",
+    //     "plane-mcp-server",
+    //     "stdio"
+    //   ],
+    //   "environment": {
+    //     "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+    //     "PLANE_WORKSPACE_SLUG": "howezt",
+    //     "PLANE_BASE_URL": "https://plane.tigor.web.id"
+    //   }
+    // },
+    // "plane-planet-melon": {
+    //   "type": "local",
+    //   "command": [
+    //     "uvx",
+    //     "--with",
+    //     "fakeredis<2.35.0",
+    //     "plane-mcp-server",
+    //     "stdio"
+    //   ],
+    //   "environment": {
+    //     "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+    //     "PLANE_WORKSPACE_SLUG": "planet-melon",
+    //     "PLANE_BASE_URL": "https://plane.tigor.web.id"
+    //   }
+    // },
+    // "plane-tigor": {
+    //   "type": "local",
+    //   "command": [
+    //     "uvx",
+    //     "--with",
+    //     "fakeredis<2.35.0",
+    //     "plane-mcp-server",
+    //     "stdio"
+    //   ],
+    //   "environment": {
+    //     "PLANE_API_KEY": "{env:PLANE_TIGOR_API_KEY}",
+    //     "PLANE_WORKSPACE_SLUG": "tigor",
+    //     "PLANE_BASE_URL": "https://plane.tigor.web.id"
+    //   }
+    // }
   },
   "plugin": [
     "@tarquinen/opencode-dcp@latest"
