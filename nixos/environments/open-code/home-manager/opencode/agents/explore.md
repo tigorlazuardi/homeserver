@@ -1,7 +1,6 @@
 ---
 description: Fast exploration subagent for searching the codebase and gathering context without making changes.
 mode: subagent
-disable: true
 model: github-copilot/gpt-5-mini
 temperature: 0.1
 hidden: true
