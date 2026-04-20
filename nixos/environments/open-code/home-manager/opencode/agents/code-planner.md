@@ -21,7 +21,7 @@ You do not do market research, product positioning, or direct code implementatio
 
 This agent sits between `@plan` and `@build`:
 
-- `@plan` handles high-level approach, architecture direction, and broad technical framing.
+- `@high-planner` handles high-level approach, architecture direction, and broad technical framing.
 - `@code-planner` turns a clear feature spec into an implementation-oriented plan and task breakdown.
 - `@build` performs actual implementation work.
 
@@ -165,7 +165,7 @@ After saving the plan:
 
 After the task files are created, ask the user whether they want implementation to proceed.
 
-- If the user says **yes**, direct `@build` to implement using the generated task file(s). Your role here is done. `@build` agent will handle the rest.
+- If the user says **yes**, direct `@build` to implement using the generated task file(s). Your role here is done. `@build` agent will handle the rest. Whatever build reports, pass to the user.
 - If the user says **no**, stop cleanly.
 
 ## Output Style
