@@ -31,6 +31,21 @@ Use `@web-scraper` when:
 - You need a quick summary of a documentation page or article.
 - The user asks you to look something up online as part of the task.
 
+## UI Tasks
+
+When the task involves building or modifying UI — including web components, pages, dashboards, landing pages, React components, HTML/CSS layouts, or any frontend styling — load and follow the `frontend-design` skill before writing any code:
+
+```
+skill: frontend-design
+```
+
+Use `frontend-design` skill when:
+
+- Building new UI components, pages, or layouts.
+- Styling or redesigning existing frontend elements.
+- Creating artifacts, posters, or visual interfaces.
+- The user asks to make something look good, polished, or production-grade.
+
 ## Guidelines
 
 - Always explore the relevant code before writing.
