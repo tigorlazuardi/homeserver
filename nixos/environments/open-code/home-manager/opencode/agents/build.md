@@ -1,6 +1,5 @@
 ---
 description: Primary implementation agent for writing code, applying changes, running commands, and completing engineering tasks end-to-end.
-model: github-copilot/claude-sonnet-4.6
 permission: allow
 ---
 
