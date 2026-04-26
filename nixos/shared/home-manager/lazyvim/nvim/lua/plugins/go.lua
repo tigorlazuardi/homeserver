@@ -50,4 +50,15 @@ return {
       return opts
     end,
   },
+  {
+    "edolphin-ydf/goimpl.nvim",
+    ft = { "go" },
+    dependencies = {
+      "nvim-telescope/telescope.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      require("telescope").load_extension("goimpl")
+    end,
+  },
 }
