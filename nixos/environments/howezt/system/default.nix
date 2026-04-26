@@ -1,5 +1,5 @@
 {
-  imports = [
-    ./infisical.nix
-  ];
+  # imports = [
+  #   ./infisical.nix
+  # ];
 }

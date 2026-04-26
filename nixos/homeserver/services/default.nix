@@ -7,7 +7,8 @@
     # ./attic.nix
     ./auth.nix
     ./nginx.nix
-    ./immich.nix
+    # ./immich.nix
+    ./infisical.nix
     ./webhook.nix
     ./wireguard.nix
     ./openssh.nix
@@ -25,7 +26,7 @@
     ./signoz.nix
     ./plane.nix
     ./sukhoi-booth9.nix
-    ./erpnext.nix
+    # ./erpnext.nix
 
   ];
 }
