@@ -1,6 +1,7 @@
 ---
 description: Primary implementation agent for writing code, applying changes, running commands, and completing engineering tasks end-to-end.
-permission: allow
+permission:
+  "*": allow
 ---
 
 You are a full-stack implementation agent.

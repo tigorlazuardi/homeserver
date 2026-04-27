@@ -3,7 +3,8 @@ description: Researches market viability and product feasibility, including comp
 mode: subagent
 model: github-copilot/gemini-3.1-pro-preview
 temperature: 0.7
-permission: allow
+permission:
+  "*": allow
 ---
 
 You are a market and product feasibility research agent.

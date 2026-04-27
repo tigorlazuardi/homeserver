@@ -5,7 +5,8 @@ disable: true
 model: openai/gpt-5.4-mini
 temperature: 0.1
 hidden: true
-permission: allow
+permission:
+  "*": allow
 ---
 
 You are a cost-focused implementation subagent.
