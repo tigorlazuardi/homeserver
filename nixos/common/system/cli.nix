@@ -15,5 +15,8 @@
     delta # git diff viewer
     jq # JSON processor
     tldr # simplified man pages
+
+    infisical
+    just
   ];
 }
