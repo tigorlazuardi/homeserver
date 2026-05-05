@@ -1,7 +1,7 @@
 ---
 description: Fast exploration subagent for searching the codebase and gathering context without making changes.
 mode: subagent
-model: github-copilot/gpt-5-mini
+model: github-copilot/grok-code-fast-1
 temperature: 0.1
 hidden: true
 permission:

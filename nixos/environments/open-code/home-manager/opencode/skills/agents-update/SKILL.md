@@ -1,6 +1,6 @@
 ---
 name: agents-update
-description: 'Add or update knowledge files and rules in an existing agents/ system. Use when user says "add a rule", "update agents", "add knowledge file", "document this convention", or wants to capture a new decision/rule into the project knowledge base. Follows the lazy-load pattern — touches only the minimal files needed.'
+description: 'Add or update knowledge files and rules in an existing .agents/ system. Use when user says "add a rule", "update agents", "add knowledge file", "document this convention", or wants to capture a new decision/rule into the project knowledge base. Follows the lazy-load pattern — touches only the minimal files needed.'
 license: MIT
 allowed-tools: Read, Write, Glob
 ---
@@ -9,7 +9,7 @@ allowed-tools: Read, Write, Glob
 
 ## Overview
 
-This skill adds new rules or knowledge to an **existing** `agents/` system without bloating it. The lazy-load pattern must be preserved: every addition goes into the **most specific, smallest scope** possible.
+This skill adds new rules or knowledge to an **existing** `.agents/` system without bloating it. The lazy-load pattern must be preserved: every addition goes into the **most specific, smallest scope** possible.
 
 ---
 
@@ -19,11 +19,11 @@ Before writing anything, ask:
 
 ```
 Is it a hard rule (concrete do/don't for code)?
-  ├─ Yes → agents/rules/<domain>.md
+  ├─ Yes → .agents/rules/<domain>.md
   │         If new domain → create new rule file + update index.md index
   │
   └─ No → Is it domain knowledge (how something works, design decisions, IDs/config)?
-            ├─ Yes → agents/<domain>.md
+            ├─ Yes → .agents/<domain>.md
             │         If new domain → create new knowledge file + update AGENTS.md index
             │
             └─ No → Does it belong in AGENTS.md itself?
@@ -33,10 +33,10 @@ Is it a hard rule (concrete do/don't for code)?
 ```
 
 **Rules of thumb:**
-- Concrete, actionable do/don't → `agents/rules/`
-- Context, background, how-it-works → `agents/<domain>.md`
-- IDs, config values, workflow steps → `agents/<domain>.md`
-- Never put content in `agents/index.md` itself — it is index-only
+- Concrete, actionable do/don't → `.agents/rules/`
+- Context, background, how-it-works → `.agents/<domain>.md`
+- IDs, config values, workflow steps → `.agents/<domain>.md`
+- Never put content in `.agents/index.md` itself — it is index-only
 
 ---
 
@@ -48,7 +48,7 @@ Always start by reading the existing index files:
 
 ```
 Read: AGENTS.md
-Read: agents/index.md
+Read: .agents/index.md
 ```
 
 This tells you what files exist and what they cover. Do **not** read all knowledge files — only the ones relevant to the update.
@@ -58,7 +58,7 @@ This tells you what files exist and what they cover. Do **not** read all knowled
 Based on the user's request and the decision tree above:
 
 - If updating an **existing** rule/knowledge file → read that file, then edit it
-- If creating a **new** rule file → also update `agents/index.md` index
+- If creating a **new** rule file → also update `.agents/index.md` index
 - If creating a **new** knowledge file → also update `AGENTS.md` index table
 
 ### Step 3: Read the Target File
@@ -84,7 +84,7 @@ Read the specific file that will be modified. Do not read others.
   ## <Another Rule Topic>
   ...
   ```
-- Then add one line to `agents/index.md` index table
+- Then add one line to `.agents/index.md` index table
 
 **For creating a new knowledge file:**
 - Follow this structure:
@@ -107,7 +107,7 @@ After making changes, check:
 - [ ] New knowledge files are listed in `AGENTS.md` with correct trigger description
 - [ ] Trigger descriptions are specific enough to decide without reading the file
 - [ ] `AGENTS.md` is still under 60 lines
-- [ ] `agents/index.md` is still index-only (no actual rules in it)
+- [ ] `.agents/index.md` is still index-only (no actual rules in it)
 
 ---
 
@@ -115,12 +115,12 @@ After making changes, check:
 
 When adding to `AGENTS.md` knowledge table:
 ```
-| `agents/<name>.md` | <verb phrase describing when to load, e.g. "auth, sessions, permissions, middleware chain"> |
+| `.agents/<name>.md` | <verb phrase describing when to load, e.g. "auth, sessions, permissions, middleware chain"> |
 ```
 
-When adding to `agents/index.md` index:
+When adding to `.agents/index.md` index:
 ```
-| `agents/rules/<name>.md` | <verb phrase, e.g. "DB schema, ORM, migrations, query naming"> |
+| `.agents/rules/<name>.md` | <verb phrase, e.g. "DB schema, ORM, migrations, query naming"> |
 ```
 
 Trigger descriptions should be **comma-separated keywords or short phrases** — specific enough that AI can match them to the current task at a glance.
@@ -129,9 +129,7 @@ Trigger descriptions should be **comma-separated keywords or short phrases** —
 
 ## Anti-Patterns
 
-- ❌ Putting a rule directly in `agents/index.md` (it's an index)
-- ❌ Putting rules in a knowledge file (`agents/*.md` outside `rules/`)
-- ❌ Putting knowledge/context in a rule file (`agents/rules/*.md`)
-- ❌ Updating `AGENTS.md` body content (only the index tables and structure change)
-- ❌ Reading all existing knowledge files before deciding where to put something
-- ❌ Creating a catch-all `agents/rules/misc.md` — if it doesn't fit, reconsider the domain split or ask the user
+- ❌ Putting a rule directly in `.agents/index.md` (it's an index)
+- ❌ Putting rules in a knowledge file (`.agents/*.md` outside `rules/`)
+- ❌ Putting knowledge/context in a rule file (`.agents/rules/*.md`)
+- ❌ Creating a catch-all `.agents/rules/misc.md` — if it doesn't fit, reconsider the domain split or ask the user

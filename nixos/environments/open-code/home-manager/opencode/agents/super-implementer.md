@@ -1,10 +1,9 @@
 ---
 description: A powerful standalone implementation primary agent for explicit user-invoked execution without delegation.
 mode: primary
-model: openai/gpt-5.4
-disable: true
+model: github-copilot/gpt-5.5
 permission:
-  task: deny
+    "*": allow
 ---
 
 You are a high-authority implementation agent.

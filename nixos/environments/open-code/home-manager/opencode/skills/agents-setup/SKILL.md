@@ -1,6 +1,6 @@
 ---
 name: agents-setup
-description: 'Scaffold a lazy-load AGENTS.md knowledge system for a new project. Use when user says "setup agents", "init agents", "create AGENTS.md", or wants to set up AI knowledge files for a project. Analyzes the project structure and generates a lean AGENTS.md index + agents/ knowledge files that AI models load on-demand.'
+description: 'Scaffold a lazy-load AGENTS.md knowledge system for a new project. Use when user says "setup agents", "init agents", "create AGENTS.md", or wants to set up AI knowledge files for a project. Analyzes the project structure and generates a lean AGENTS.md index + .agents/ knowledge files that AI models load on-demand.'
 license: MIT
 allowed-tools: Read, Write, Bash, Glob
 ---
@@ -9,13 +9,13 @@ allowed-tools: Read, Write, Bash, Glob
 
 ## Overview
 
-This skill scaffolds a **lean AGENTS.md + agents/ knowledge file system** for any project. The goal: AI models read a minimal AGENTS.md on every session, then load only the knowledge files relevant to the current task — keeping context lean and retrieval sharp.
+This skill scaffolds a **lean AGENTS.md + .agents/ knowledge file system** for any project. The goal: AI models read a minimal AGENTS.md on every session, then load only the knowledge files relevant to the current task — keeping context lean and retrieval sharp.
 
 ## Pattern
 
 ```
 AGENTS.md              ← Minimal index (~50 lines). Always read.
-agents/
+.agents/
   index.md        ← Rules index. Always load before writing code.
   rules/
     general.md         ← Always load for any code change
@@ -40,6 +40,7 @@ Before generating anything, explore the project to understand:
 5. **Domain knowledge areas** — What topics an AI would need to know to work on this project
 
 Run these to gather context:
+
 ```bash
 ls -la
 cat package.json 2>/dev/null || cat pyproject.toml 2>/dev/null || cat Cargo.toml 2>/dev/null
@@ -66,7 +67,7 @@ Based on project analysis, identify 4–8 knowledge domains. Common ones:
 
 ### Step 3: Identify Hard Rules
 
-Hard rules are conventions that apply to code writing — things that are easy to get wrong and have concrete do/don't form. Group them into rule files under `agents/rules/`:
+Hard rules are conventions that apply to code writing — things that are easy to get wrong and have concrete do/don't form. Group them into rule files under `.agents/rules/`:
 
 - `rules/general.md` — Always applies (imports, naming, package constraints)
 - `rules/<domain>.md` — Domain-specific rules (e.g., `rules/database.md`, `rules/api.md`, `rules/svelte.md`)
@@ -74,6 +75,7 @@ Hard rules are conventions that apply to code writing — things that are easy t
 ### Step 4: Present Plan to User
 
 Before generating files, present:
+
 - Which knowledge files will be created and what they'll cover
 - Which rule files will be created
 - Ask if any domains are missing or should be renamed
@@ -84,10 +86,10 @@ Wait for approval before generating.
 
 Generate in this order:
 
-1. `agents/rules/general.md` — Always-applicable rules
-2. `agents/rules/<domain>.md` — Per-domain rules
-3. `agents/index.md` — Index pointing to rule files
-4. `agents/<knowledge>.md` — Knowledge files per domain
+1. `.agents/rules/general.md` — Always-applicable rules
+2. `.agents/rules/<domain>.md` — Per-domain rules
+3. `.agents/index.md` — Index pointing to rule files
+4. `.agents/<knowledge>.md` — Knowledge files per domain
 5. `AGENTS.md` — The lean index tying everything together
 
 ---
@@ -123,13 +125,13 @@ When uncertain about design — read `<design-docs-folder>/` first before asking
 
 | File | Load when task involves... |
 | ---- | -------------------------- |
-| `agents/architecture.md` | deployment, package structure, data flow |
-| `agents/tech-stack.md`   | choosing libraries, env vars, secrets |
-| `agents/database.md`     | schema, ORM, migrations |
-| `agents/api.md`          | routes, auth middleware, request shape |
+| `.agents/architecture.md` | deployment, package structure, data flow |
+| `.agents/tech-stack.md`   | choosing libraries, env vars, secrets |
+| `.agents/database.md`     | schema, ORM, migrations |
+| `.agents/api.md`          | routes, auth middleware, request shape |
 | ...                      | ...                       |
 
-> **Rule:** Before writing any code, always load `agents/index.md` — it is an index that tells you which rule file(s) to load. Load domain knowledge files only when the task touches that domain.
+> **Rule:** Before writing any code, always load `.agents/index.md` — it is an index that tells you which rule file(s) to load. Load domain knowledge files only when the task touches that domain.
 ```
 
 ---
@@ -143,12 +145,12 @@ Before writing any code, load the rule files relevant to the current task:
 
 | File | Load when task involves... |
 | ---- | -------------------------- |
-| `agents/rules/general.md`  | any code change — naming, imports, constraints |
-| `agents/rules/database.md` | DB schema, ORM, migrations, query naming |
-| `agents/rules/api.md`      | routes, services, validation schemas |
-| `agents/rules/ui.md`       | components, styling, design tokens |
+| `.agents/rules/general.md`  | any code change — naming, imports, constraints |
+| `.agents/rules/database.md` | DB schema, ORM, migrations, query naming |
+| `.agents/rules/api.md`      | routes, services, validation schemas |
+| `.agents/rules/ui.md`       | components, styling, design tokens |
 
-> **Minimum baseline:** Always load `agents/rules/general.md` for any code change.
+> **Minimum baseline:** Always load `.agents/rules/general.md` for any code change.
 > Load others only when the task touches that domain.
 ```
 
