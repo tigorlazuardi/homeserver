@@ -14,6 +14,7 @@
       pnpm
       bun
       nodejs
+      zellij # Keep session alive
     ]);
 
   home.file.".pi".source =
