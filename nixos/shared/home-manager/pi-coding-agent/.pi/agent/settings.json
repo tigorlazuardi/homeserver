@@ -1,0 +1,21 @@
+{
+  "lastChangelogVersion": "0.74.0",
+  "defaultProvider": "kimi-coding",
+  "defaultModel": "kimi-for-coding",
+  "defaultThinkingLevel": "medium",
+  "packages": [
+    "npm:pi-rtk-optimizer",
+    "npm:pi-mcp-adapter",
+    "npm:@juicesharp/rpiv-todo",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:pi-notify",
+    "npm:pi-nano-context",
+    "npm:pi-observational-memory",
+    "npm:pi-rustdex",
+    "npm:@pi-unipi/web-api",
+    "npm:@vanillagreen/pi-caveman",
+    "npm:@tintinweb/pi-subagents"
+  ],
+  "editorPaddingX": 1,
+  "doubleEscapeAction": "tree"
+}

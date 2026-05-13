@@ -1,0 +1,12 @@
+agent/state
+agent/sessions
+agent/vstack
+agent/memory
+agent/git
+**/MEMORY.md
+auth.json
+mcp-*.json
+*.log
+*.jsonl
+
+.pi
