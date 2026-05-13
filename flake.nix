@@ -24,6 +24,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     opencode.url = "github:anomalyco/opencode";
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
   outputs = inputs: {
     nixosConfigurations = import ./nixos inputs;
