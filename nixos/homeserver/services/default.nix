@@ -26,6 +26,7 @@
     ./signoz.nix
     ./plane.nix
     ./sukhoi-booth9.nix
+    ./searxng.nix
     # ./erpnext.nix
 
   ];
