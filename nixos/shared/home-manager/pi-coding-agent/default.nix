@@ -23,7 +23,7 @@
     enable = true;
     settings = {
       # Allow for npm install -g stuffs
-      prefix = "\${HOME}/.local/npm";
+      prefix = "${config.home.homeDirectory}/.local/npm";
     };
   };
 
@@ -35,5 +35,10 @@
   programs.fish.enable = true;
   programs.fish.interactiveShellInit = /* fish */ ''
     source ${config.sops.secrets."pi-coding-agent/secrets.fish".path}
+    fish_add_path ${config.programs.npm.settings.prefix}/bin
+    # Bun binaries
+    fish_add_path ${config.home.homeDirectory}/.bun/bin
+    # Go binaries
+    fish_add_path ${config.home.homeDirectory}/go/bin
   '';
 }
