@@ -16,6 +16,13 @@ vim.opt.tabstop = 4
 vim.opt.clipboard = "unnamedplus"
 
 if vim.env.SSH_CLIENT then
+  local function my_paste(reg)
+    return function(lines)
+      --[ 返回 “” 寄存器的内容，用来作为 p 操作符的粘贴物 ]
+      local content = vim.fn.getreg('"')
+      return vim.split(content, "\n")
+    end
+  end
   vim.g.clipboard = {
     name = "OSC 52",
     copy = {
@@ -23,8 +30,8 @@ if vim.env.SSH_CLIENT then
       ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
     },
     paste = {
-      ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
-      ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+      ["+"] = my_paste("+"),
+      ["*"] = my_paste("*"),
     },
   }
 end

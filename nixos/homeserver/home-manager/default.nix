@@ -3,6 +3,7 @@
   imports = [
     ../../shared/home-manager/git.nix
     ../../shared/home-manager/lazygit.nix
+    ../../shared/home-manager/bun.nix
     ../../shared/home-manager/zed
     ../../environments/open-code/home-manager
   ];
