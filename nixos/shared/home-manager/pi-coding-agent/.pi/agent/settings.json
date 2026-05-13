@@ -14,7 +14,8 @@
     "npm:pi-rustdex",
     "npm:@pi-unipi/web-api",
     "npm:@vanillagreen/pi-caveman",
-    "npm:@tintinweb/pi-subagents"
+    "npm:@tintinweb/pi-subagents",
+    "npm:pi-telebridge"
   ],
   "editorPaddingX": 1,
   "doubleEscapeAction": "tree"
