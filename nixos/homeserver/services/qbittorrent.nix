@@ -65,6 +65,7 @@ in
       PUID = "1000";
       PGID = "1000";
       TZ = "Asia/Jakarta";
+      WEBUI_PORT = "8080";
     };
     # environmentFiles = [
     #   config.sops.templates."ntfy/client.env".path
