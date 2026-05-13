@@ -11,6 +11,7 @@
 
     ./locale.nix
     ./networking.nix
+    ./nix-ld.nix
     ./podman.nix
     ./sudo.nix
     ./user.nix
