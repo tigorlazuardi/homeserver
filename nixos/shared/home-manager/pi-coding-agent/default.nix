@@ -26,4 +26,14 @@
       prefix = "\${HOME}/.local/npm";
     };
   };
+
+  sops.secrets."pi-coding-agent/secrets.fish" = {
+    sopsFile = ./secrets.fish;
+    key = "";
+    format = "binary";
+  };
+  programs.fish.enable = true;
+  programs.fish.interactiveShellInit = /* fish */ ''
+    source ${config.sops.secrets."pi-coding-agent/secrets.fish".path}
+  '';
 }
