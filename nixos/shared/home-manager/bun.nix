@@ -6,8 +6,4 @@
       telemetry = false;
     };
   };
-
-  home.sessionPath = [
-    "${config.home.homeDirectory}/.bun/bin"
-  ];
 }
