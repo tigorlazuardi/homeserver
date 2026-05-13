@@ -25,7 +25,7 @@
     ./smartd.nix
     ./signoz.nix
     ./plane.nix
-    ./sukhoi-booth9.nix
+    # ./sukhoi-booth9.nix
     ./searxng.nix
     # ./erpnext.nix
 
