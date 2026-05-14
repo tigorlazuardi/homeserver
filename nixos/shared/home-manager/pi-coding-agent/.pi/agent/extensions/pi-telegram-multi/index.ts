@@ -99,6 +99,11 @@ function getLocksPath(): string {
 }
 
 function getBotIdFromToken(token: string): string {
+  // Bot token format: <numeric_bot_id>:<random_string>
+  // Use the numeric bot ID directly — readable and unique per bot
+  const botId = token.split(":")[0];
+  if (/^\d+$/.test(botId)) return botId;
+  // Fallback for malformed tokens
   return createHash("sha256").update(token).digest("hex").slice(0, 16);
 }
 
@@ -244,8 +249,27 @@ async function getUpdates(
   botToken: string,
   opts: { offset?: number; limit?: number; timeout?: number; allowed_updates?: string[]; signal?: AbortSignal },
 ): Promise<TelegramUpdate[]> {
-  const result = await tgFetch<TelegramUpdate[]>(botToken, "getUpdates", opts, opts.signal);
-  return result ?? [];
+  try {
+    const res = await fetch(tgApiUrl(botToken, "getUpdates"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+      signal: opts.signal,
+    });
+    const json = (await res.json()) as { ok: boolean; result?: TelegramUpdate[]; description?: string };
+    if (!json.ok) {
+      if (json.description?.includes("Conflict") || json.description?.includes("terminated by other")) {
+        throw new Error(`409 Conflict: ${json.description}`);
+      }
+      console.error(`[pi-telegram-multi] getUpdates failed:`, json.description);
+      return [];
+    }
+    return json.result ?? [];
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("409 Conflict")) throw err;
+    console.error(`[pi-telegram-multi] getUpdates error:`, err);
+    return [];
+  }
 }
 
 async function getFilePath(botToken: string, fileId: string): Promise<string | undefined> {
@@ -309,6 +333,14 @@ async function editMessageText(
     message_id: messageId,
     text,
     ...opts,
+  });
+  return !!result;
+}
+
+async function deleteMessage(botToken: string, chatId: number, messageId: number): Promise<boolean> {
+  const result = await tgFetch<unknown>(botToken, "deleteMessage", {
+    chat_id: chatId,
+    message_id: messageId,
   });
   return !!result;
 }
@@ -542,6 +574,7 @@ export default function (pi: ExtensionAPI) {
 
   const botToken = config.botToken;
   const botId = getBotIdFromToken(botToken);
+  console.log(`[pi-telegram-multi] Bot ID: ${botId}`);
   let chatId = config.chatId;
   let allowedUserId: number | undefined = undefined; // Will be set on /start
   let botUsername = "";
@@ -600,6 +633,12 @@ export default function (pi: ExtensionAPI) {
         }
       } catch (err) {
         if (isShuttingDown) return;
+        const errStr = String(err);
+        if (errStr.includes("409 Conflict")) {
+          console.error(`[pi-telegram-multi] Bot ${botId} 409 Conflict — another poller active. Backing off 15s...`);
+          await sleep(15_000);
+          continue;
+        }
         console.error("[pi-telegram-multi] poll error:", err);
         await sleep(5000);
       }
@@ -1202,7 +1241,7 @@ export default function (pi: ExtensionAPI) {
     }
     if (!lock.acquired && lock.existing) {
       console.log(
-        `[pi-telegram-multi] Bot polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
+        `[pi-telegram-multi] Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
       );
       return;
     }
@@ -1282,7 +1321,12 @@ export default function (pi: ExtensionAPI) {
     }
 
     if (lastAssistantText) {
-      await finalizePreview(lastAssistantText);
+      // Delete preview message to avoid duplicate/partial text
+      if (previewMessageId) {
+        await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => {});
+        previewMessageId = undefined;
+        previewText = "";
+      }
       await sendReply(lastAssistantText, ctx);
     }
 
@@ -1358,10 +1402,11 @@ export default function (pi: ExtensionAPI) {
     description: "Show Telegram bridge status",
     handler: async (_args, ctx) => {
       const locks = await readLocks();
-      const hash = getBotIdFromToken(botToken);
-      const lock = locks[hash];
+      const botKey = getBotIdFromToken(botToken);
+      const lock = locks[botKey];
       const lines = [
         `Connected: ${isConnected ? "yes" : "no"}`,
+        `Bot ID: ${botKey}`,
         `Chat ID: ${chatId ?? "not set"}`,
         `Queue: ${queue.length()}`,
         `Lock PID: ${lock?.pid ?? "none"}`,
