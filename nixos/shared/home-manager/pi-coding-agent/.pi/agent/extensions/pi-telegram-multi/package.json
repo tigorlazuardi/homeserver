@@ -1,0 +1,10 @@
+{
+  "name": "pi-telegram-multi",
+  "version": "1.0.0",
+  "description": "Multi-bot Telegram extension for Pi",
+  "main": "./index.ts",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "dependencies": {}
+}

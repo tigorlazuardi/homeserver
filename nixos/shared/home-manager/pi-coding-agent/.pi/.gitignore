@@ -12,3 +12,5 @@ mcp-*.json
 .pi
 
 telebridge.json
+locks.json
+telegram.json
