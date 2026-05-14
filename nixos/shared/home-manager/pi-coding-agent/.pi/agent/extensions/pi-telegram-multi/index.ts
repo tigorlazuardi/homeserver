@@ -399,7 +399,9 @@ async function downloadTelegramFile(
   }
 }
 
-// ─── Markdown → Telegram HTML ────────────────────────────────────────
+// ─── Telegram HTML Rendering (adapted from llblab/pi-telegram) ───
+
+const MAX_MESSAGE_LENGTH = 4096;
 
 function escapeHtml(text: string): string {
   return text
@@ -408,53 +410,713 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function markdownToTelegramHtml(md: string): string {
-  let html = md;
-  // Code blocks
-  html = html.replace(/```([\w]*)([\s\S]*?)```/g, (_m, lang, code) => {
-    return `<pre><code class="language-${lang || "text"}">${escapeHtml(code.trim())}</code></pre>`;
-  });
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-  // Bold
-  html = html.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-  // Italic
-  html = html.replace(/__(.+?)__/g, "<i>$1</i>");
-  // Strikethrough
-  html = html.replace(/~~(.+?)~~/g, "<s>$1</s>");
-  // Links [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-  // Blockquote
-  html = html.replace(/^>(.+)$/gm, "<blockquote>$1</blockquote>");
-  // Lists
-  html = html.replace(/^\s*[-*]\s+(.+)$/gm, "• $1");
-  // Numbered lists
-  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, "$1");
-  // Horizontal rule
-  html = html.replace(/^---+$/gm, "");
-  // Tables: crude strip
-  html = html.replace(/\|?\s*:?---+:?\s*\|?/g, "");
-  html = html.replace(/\|/g, " | ");
-  // Trim consecutive newlines to max 2
-  html = html.replace(/\n{3,}/g, "\n\n");
-  return html;
+function escapeHtmlAttribute(text: string): string {
+  return escapeHtml(text).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-function splitTelegramHtml(html: string, maxLen = 4000): string[] {
-  if (html.length <= maxLen) return [html];
-  const chunks: string[] = [];
-  let remaining = html;
-  while (remaining.length > maxLen) {
-    let cut = remaining.lastIndexOf("\n\n", maxLen);
-    if (cut < maxLen * 0.7) cut = remaining.lastIndexOf("\n", maxLen);
-    if (cut < maxLen * 0.7) cut = remaining.lastIndexOf(" ", maxLen);
-    if (cut <= 0) cut = maxLen;
-    chunks.push(remaining.slice(0, cut));
-    remaining = remaining.slice(cut).trimStart();
+interface OpenHtmlTag {
+  name: string;
+  openTag: string;
+}
+
+const TELEGRAM_VOID_HTML_TAGS = new Set(["br", "hr"]);
+
+function getHtmlTagName(tag: string): string | undefined {
+  return tag.match(/^<\/?\s*([a-zA-Z][\w-]*)/)?.[1]?.toLowerCase();
+}
+
+function isHtmlClosingTag(tag: string): boolean {
+  return /^<\//.test(tag);
+}
+
+function isHtmlSelfClosingTag(tag: string): boolean {
+  return /\/\s*>$/.test(tag);
+}
+
+function getHtmlClosingTags(openTags: OpenHtmlTag[]): string {
+  return [...openTags]
+    .reverse()
+    .map((tag) => `</${tag.name}>`)
+    .join("");
+}
+
+function getHtmlOpeningTags(openTags: OpenHtmlTag[]): string {
+  return openTags.map((tag) => tag.openTag).join("");
+}
+
+function updateOpenHtmlTags(tag: string, openTags: OpenHtmlTag[]): void {
+  const name = getHtmlTagName(tag);
+  if (!name || TELEGRAM_VOID_HTML_TAGS.has(name)) return;
+  if (isHtmlClosingTag(tag)) {
+    const index = openTags.map((openTag) => openTag.name).lastIndexOf(name);
+    if (index !== -1) openTags.splice(index, 1);
+    return;
   }
-  if (remaining) chunks.push(remaining);
+  if (isHtmlSelfClosingTag(tag)) return;
+  openTags.push({ name, openTag: tag });
+}
+
+function chunkHtmlPreservingTags(html: string, maxLength: number): string[] {
+  if (html.length <= maxLength) return [html];
+  const chunks: string[] = [];
+  const openTags: OpenHtmlTag[] = [];
+  const tagPattern = /<\/?[a-zA-Z][^>]*>/g;
+  let current = "";
+  let index = 0;
+  const flushCurrent = (): void => {
+    if (current.length === 0) return;
+    chunks.push(`${current}${getHtmlClosingTags(openTags)}`);
+    current = getHtmlOpeningTags(openTags);
+  };
+  const appendText = (text: string): void => {
+    let remaining = text;
+    while (remaining.length > 0) {
+      const closingTags = getHtmlClosingTags(openTags);
+      const available = maxLength - current.length - closingTags.length;
+      if (available <= 0) {
+        flushCurrent();
+        continue;
+      }
+      const slice = remaining.slice(0, available);
+      current += slice;
+      remaining = remaining.slice(slice.length);
+      if (remaining.length > 0) flushCurrent();
+    }
+  };
+  const appendTag = (tag: string): void => {
+    const closingTags = isHtmlClosingTag(tag)
+      ? ""
+      : getHtmlClosingTags(openTags);
+    if (current.length + tag.length + closingTags.length > maxLength) {
+      flushCurrent();
+    }
+    current += tag;
+    updateOpenHtmlTags(tag, openTags);
+  };
+  for (const match of html.matchAll(tagPattern)) {
+    appendText(html.slice(index, match.index));
+    appendTag(match[0]);
+    index = match.index + match[0].length;
+  }
+  appendText(html.slice(index));
+  if (current.length > 0) chunks.push(current);
   return chunks;
 }
+
+// ─── Markdown → Telegram HTML ────────────────────────────────────────
+
+function normalizeMarkdownDocument(markdown: string): string {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  let start = 0;
+  while (start < lines.length && (lines[start] ?? "").trim().length === 0) {
+    start += 1;
+  }
+  let end = lines.length;
+  while (end > start && (lines[end - 1] ?? "").trim().length === 0) {
+    end -= 1;
+  }
+  return lines.slice(start, end).join("\n");
+}
+
+function matchMarkdownHeadingLine(line: string): RegExpMatchArray | null {
+  return line.match(/^(\s*)#{1,6}\s+(.+)$/);
+}
+
+function stripInlineMarkdownToPlainText(text: string): string {
+  let result = text
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+    .replace(/`([^`\n]+)`/g, "$1")
+    .replace(/(\*\*\*|___)(.+?)\1/g, "$2")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(\*|_)(.+?)\1/g, "$2")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/\\([\\`*_{}\[\]()#+\-.!>~|])/g, "$1");
+  return result;
+}
+
+interface InlineMarkdownTokenState {
+  tokens: string[];
+}
+
+function makeInlineMarkdownToken(state: InlineMarkdownTokenState, html: string): string {
+  const token = `\uE000${state.tokens.length}\uE001`;
+  state.tokens.push(html);
+  return token;
+}
+
+function stashInlineMarkdownLinks(text: string, state: InlineMarkdownTokenState): string {
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label: string, destination: string) => {
+    const plainLabel = stripInlineMarkdownToPlainText(label).trim();
+    const renderedLabel = plainLabel.length > 0 ? plainLabel : destination;
+    return makeInlineMarkdownToken(
+      state,
+      `<a href="${escapeHtmlAttribute(destination)}">${escapeHtml(renderedLabel)}</a>`,
+    );
+  });
+}
+
+function stashInlineMarkdownCodeSpans(text: string, state: InlineMarkdownTokenState): string {
+  return text.replace(/`([^`\n]+)`/g, (_match, code: string) => {
+    return makeInlineMarkdownToken(state, `<code>${escapeHtml(code)}</code>`);
+  });
+}
+
+function renderDelimitedInlineStyle(text: string, delimiter: string, render: (content: string) => string): string {
+  const escapedDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `(^|[^\\p{L}\\p{N}\\\\])(${escapedDelimiter})(?=\\S)(.+?)(?<=\\S)\\2(?=[^\\p{L}\\p{N}]|$)`,
+    "gu",
+  );
+  return text.replace(
+    pattern,
+    (_match, prefix: string, _wrapped: string, content: string) => {
+      return `${prefix}${render(content)}`;
+    },
+  );
+}
+
+function applyInlineMarkdownStyles(text: string): string {
+  let result = renderDelimitedInlineStyle(text, "***", (content) => `<b><i>${content}</i></b>`);
+  result = renderDelimitedInlineStyle(result, "___", (content) => `<b><i>${content}</i></b>`);
+  result = renderDelimitedInlineStyle(result, "~~", (content) => `<s>${content}</s>`);
+  result = renderDelimitedInlineStyle(result, "**", (content) => `<b>${content}</b>`);
+  result = renderDelimitedInlineStyle(result, "__", (content) => `<b>${content}</b>`);
+  result = renderDelimitedInlineStyle(result, "*", (content) => `<i>${content}</i>`);
+  return renderDelimitedInlineStyle(result, "_", (content) => `<i>${content}</i>`);
+}
+
+function restoreInlineMarkdownTokens(text: string, state: InlineMarkdownTokenState): string {
+  return text.replace(
+    /\uE000(\d+)\uE001/g,
+    (_match, index: string) => state.tokens[Number(index)] ?? "",
+  );
+}
+
+function renderInlineMarkdown(text: string): string {
+  const tokenState: InlineMarkdownTokenState = { tokens: [] };
+  let result = stashInlineMarkdownLinks(text, tokenState);
+  result = stashInlineMarkdownCodeSpans(result, tokenState);
+  result = escapeHtml(result);
+  result = applyInlineMarkdownStyles(result);
+  result = result.replace(/\\([\\`*_{}\[\]()#+\-.!>~|])/g, "$1");
+  return restoreInlineMarkdownTokens(result, tokenState);
+}
+
+function renderMarkdownTextPiece(piece: string): string {
+  const heading = matchMarkdownHeadingLine(piece);
+  if (heading) {
+    return `<b>${renderInlineMarkdown(heading[2] ?? "")}</b>`;
+  }
+  const task = piece.match(/^(\s*)([-*+]|\d+\.)\s+\[([ xX])\]\s+(.+)$/);
+  if (task) {
+    const checkboxMarker = (task[3] ?? " ").toLowerCase() === "x" ? "[x]" : "[ ]";
+    return `<code>${checkboxMarker}</code> ${renderInlineMarkdown(task[4] ?? "")}`;
+  }
+  const bullet = piece.match(/^(\s*)[-*+]\s+(.+)$/);
+  if (bullet) {
+    return `<code>-</code> ${renderInlineMarkdown(bullet[2] ?? "")}`;
+  }
+  const numbered = piece.match(/^(\s*)(\d+)\.\s+(.+)$/);
+  if (numbered) {
+    return `<code>${numbered[2]}.</code> ${renderInlineMarkdown(numbered[3] ?? "")}`;
+  }
+  const quote = piece.match(/^>\s?(.+)$/);
+  if (quote) {
+    return `<blockquote>${renderInlineMarkdown(quote[1] ?? "")}</blockquote>`;
+  }
+  if (/^([-*_]\s*){3,}$/.test(piece.trim())) return "────────────";
+  return renderInlineMarkdown(piece);
+}
+
+function renderMarkdownTextLines(block: string): string[] {
+  const rendered: string[] = [];
+  const lines = block.split("\n");
+  for (const line of lines) {
+    if (line.trim().length === 0) continue;
+    rendered.push(renderMarkdownTextPiece(line));
+  }
+  return rendered;
+}
+
+function sanitizeTelegramCodeLanguage(language: string): string {
+  return language.split(/\s+/)[0]?.replace(/[^A-Za-z0-9_+.-]/g, "") ?? "";
+}
+
+function renderMarkdownCodeBlock(code: string, language?: string): string[] {
+  const safeLanguage = language ? sanitizeTelegramCodeLanguage(language) : "";
+  const open = safeLanguage
+    ? `<pre><code class="language-${escapeHtmlAttribute(safeLanguage)}">`
+    : "<pre><code>";
+  const close = "</code></pre>";
+  const maxContentLength = MAX_MESSAGE_LENGTH - open.length - close.length;
+  const chunks: string[] = [];
+  let current = "";
+  const pushCurrent = (): void => {
+    if (current.length === 0) return;
+    chunks.push(`${open}${current}${close}`);
+    current = "";
+  };
+  const appendEscapedLine = (escapedLine: string): void => {
+    if (escapedLine.length <= maxContentLength) {
+      const candidate = current.length === 0 ? escapedLine : `${current}\n${escapedLine}`;
+      if (candidate.length <= maxContentLength) {
+        current = candidate;
+        return;
+      }
+      pushCurrent();
+      current = escapedLine;
+      return;
+    }
+    pushCurrent();
+    for (let i = 0; i < escapedLine.length; i += maxContentLength) {
+      chunks.push(`${open}${escapedLine.slice(i, i + maxContentLength)}${close}`);
+    }
+  };
+  for (const line of code.split("\n")) {
+    appendEscapedLine(escapeHtml(line));
+  }
+  pushCurrent();
+  return chunks.length > 0 ? chunks : [`${open}${close}`];
+}
+
+function isMarkdownTableSeparator(line: string): boolean {
+  return /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$/.test(line);
+}
+
+function parseMarkdownTableRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split("|").map((cell) => stripInlineMarkdownToPlainText(cell.trim()));
+}
+
+function getTelegramTableGraphemes(text: string): string[] {
+  if (typeof Intl.Segmenter === "function") {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    return Array.from(segmenter.segment(text), (segment) => segment.segment);
+  }
+  return Array.from(text);
+}
+
+function isTelegramTableEmojiGrapheme(grapheme: string): boolean {
+  return /\p{Extended_Pictographic}|\p{Emoji_Presentation}|\p{Regional_Indicator}/u.test(grapheme) || grapheme.includes("\u20e3");
+}
+
+function getTelegramTableCodePointWidth(char: string): number {
+  const codePoint = char.codePointAt(0) ?? 0;
+  if (codePoint === 0 || codePoint < 32) return 0;
+  if (/\p{Mark}/u.test(char)) return 0;
+  if ((codePoint >= 0xfe00 && codePoint <= 0xfe0f) || codePoint === 0x200d) return 0;
+  if (
+    (codePoint >= 0x1100 && codePoint <= 0x115f) ||
+    codePoint === 0x2329 || codePoint === 0x232a ||
+    (codePoint >= 0x2e80 && codePoint <= 0xa4cf) ||
+    (codePoint >= 0xac00 && codePoint <= 0xd7a3) ||
+    (codePoint >= 0xf900 && codePoint <= 0xfaff) ||
+    (codePoint >= 0xfe10 && codePoint <= 0xfe19) ||
+    (codePoint >= 0xfe30 && codePoint <= 0xfe6f) ||
+    (codePoint >= 0xff00 && codePoint <= 0xff60) ||
+    (codePoint >= 0xffe0 && codePoint <= 0xffe6)
+  ) {
+    return 2;
+  }
+  return 1;
+}
+
+function getTelegramTableCellWidth(text: string): number {
+  return getTelegramTableGraphemes(text).reduce((width, grapheme) => {
+    if (isTelegramTableEmojiGrapheme(grapheme)) return width + 2;
+    return width + Array.from(grapheme).reduce((sum, char) => sum + getTelegramTableCodePointWidth(char), 0);
+  }, 0);
+}
+
+function padTelegramTableCellEnd(cell: string, width: number): string {
+  const padding = width - getTelegramTableCellWidth(cell);
+  return padding > 0 ? `${cell}${" ".repeat(padding)}` : cell;
+}
+
+function renderMarkdownTableBlock(lines: string[]): string[] {
+  const rows = lines.map(parseMarkdownTableRow);
+  const columnCount = Math.max(...rows.map((row) => row.length), 0);
+  const normalizedRows = rows.map((row) => {
+    const next = [...row];
+    while (next.length < columnCount) next.push("");
+    return next;
+  });
+  const widths = Array.from({ length: columnCount }, (_, columnIndex) => {
+    return Math.max(3, ...normalizedRows.map((row) => getTelegramTableCellWidth(row[columnIndex] ?? "")));
+  });
+  const formatRow = (row: string[]): string => {
+    return row.map((cell, columnIndex) => padTelegramTableCellEnd(cell ?? "", widths[columnIndex] ?? 3)).join(" | ");
+  };
+  const separator = widths.map((width) => "-".repeat(width)).join(" | ");
+  const [header, ...body] = normalizedRows;
+  const tableLines = [formatRow(header ?? []), separator, ...body.map(formatRow)];
+  return renderMarkdownCodeBlock(tableLines.join("\n"), "markdown");
+}
+
+function chunkRenderedHtmlLines(lines: string[], wrapper?: { open: string; close: string }): string[] {
+  if (lines.length === 0) return [];
+  const open = wrapper?.open ?? "";
+  const close = wrapper?.close ?? "";
+  const maxContentLength = MAX_MESSAGE_LENGTH - open.length - close.length;
+  const chunks: string[] = [];
+  let current = "";
+  const pushCurrent = (): void => {
+    if (current.length === 0) return;
+    chunks.push(`${open}${current}${close}`);
+    current = "";
+  };
+  for (const line of lines) {
+    const candidate = current.length === 0 ? line : `${current}\n${line}`;
+    if (candidate.length <= maxContentLength) {
+      current = candidate;
+      continue;
+    }
+    pushCurrent();
+    if (line.length <= maxContentLength) {
+      current = line;
+      continue;
+    }
+    for (let i = 0; i < line.length; i += maxContentLength) {
+      chunks.push(`${open}${line.slice(i, i + maxContentLength)}${close}`);
+    }
+  }
+  pushCurrent();
+  return chunks;
+}
+
+function renderMarkdownTextBlock(block: string): string[] {
+  return chunkRenderedHtmlLines(renderMarkdownTextLines(block));
+}
+
+function renderMarkdownQuoteBlock(lines: string[]): string[] {
+  const inner = lines.map((line) => {
+    const match = line.match(/^\s*((?:>\s*)+)(.*)$/);
+    if (!match) return line;
+    const depth = (match[1].match(/>/g) ?? []).length;
+    const nestedIndent = "\u00A0".repeat(Math.max(0, depth - 1) * 2);
+    return `${nestedIndent}${match[2] ?? ""}`;
+  }).join("\n");
+  return chunkRenderedHtmlLines(renderMarkdownTextLines(inner), { open: "<blockquote>", close: "</blockquote>" });
+}
+
+function parseMarkdownFence(line: string): { marker: "`" | "~"; length: number; info?: string } | undefined {
+  const match = line.match(/^(\s*)([`~]{3,})(.*)$/);
+  if (!match) return undefined;
+  const fence = match[2] ?? "";
+  const marker = fence[0] as "`" | "~";
+  if ((marker !== "`" && marker !== "~") || /[^`~]/.test(fence)) {
+    return undefined;
+  }
+  if (!fence.split("").every((char) => char === marker)) return undefined;
+  return { marker, length: fence.length, info: (match[3] ?? "").trim() || undefined };
+}
+
+function isMatchingMarkdownFence(line: string, fence: { marker: "`" | "~"; length: number }): boolean {
+  const match = line.match(/^(\s*)([`~]{3,})\s*$/);
+  if (!match) return false;
+  const candidate = match[2] ?? "";
+  return (
+    candidate.length >= fence.length &&
+    candidate[0] === fence.marker &&
+    candidate.split("").every((char) => char === fence.marker)
+  );
+}
+
+function isFencedCodeStart(line: string): boolean {
+  return parseMarkdownFence(line) !== undefined;
+}
+
+interface TelegramRenderedBlockWithSpacing {
+  text: string;
+  blankLinesBefore: number;
+}
+
+function collectFencedMarkdownCodeLines(lines: string[], index: number, fence: { marker: "`" | "~"; length: number }): { codeLines: string[]; nextIndex: number; closed: boolean } {
+  const codeLines: string[] = [];
+  let nextIndex = index + 1;
+  while (nextIndex < lines.length && !isMatchingMarkdownFence(lines[nextIndex] ?? "", fence)) {
+    codeLines.push(lines[nextIndex] ?? "");
+    nextIndex += 1;
+  }
+  const closed = nextIndex < lines.length;
+  if (closed) nextIndex += 1;
+  return { codeLines, nextIndex, closed };
+}
+
+function collectMarkdownTableBlockLines(lines: string[], index: number): { tableLines: string[]; nextIndex: number } {
+  const tableLines = [lines[index] ?? ""];
+  let nextIndex = index + 2;
+  while (nextIndex < lines.length) {
+    const tableLine = lines[nextIndex] ?? "";
+    if (tableLine.trim().length === 0 || !tableLine.includes("|")) break;
+    tableLines.push(tableLine);
+    nextIndex += 1;
+  }
+  return { tableLines, nextIndex };
+}
+
+function collectQuoteBlockLines(lines: string[], index: number): { quoteLines: string[]; nextIndex: number } {
+  const quoteLines: string[] = [];
+  let nextIndex = index;
+  while (nextIndex < lines.length && /^\s*>/.test(lines[nextIndex] ?? "")) {
+    quoteLines.push(lines[nextIndex] ?? "");
+    nextIndex += 1;
+  }
+  return { quoteLines, nextIndex };
+}
+
+function isMarkdownTextBlockBoundary(lines: string[], index: number): boolean {
+  const current = lines[index] ?? "";
+  const following = lines[index + 1] ?? "";
+  if (current.trim().length === 0) return true;
+  if (isFencedCodeStart(current)) return true;
+  if (current.includes("|") && isMarkdownTableSeparator(following)) return true;
+  return /^\s*>/.test(current);
+}
+
+function collectMarkdownTextBlockLines(lines: string[], index: number): { textLines: string[]; nextIndex: number } {
+  const textLines: string[] = [];
+  let nextIndex = index;
+  while (nextIndex < lines.length) {
+    if (isMarkdownTextBlockBoundary(lines, nextIndex)) break;
+    textLines.push(lines[nextIndex] ?? "");
+    nextIndex += 1;
+  }
+  return { textLines, nextIndex };
+}
+
+function renderMarkdownDocumentBlocks(normalizedMarkdown: string): TelegramRenderedBlockWithSpacing[] {
+  const renderedBlocks: TelegramRenderedBlockWithSpacing[] = [];
+  let minimumBlankLinesBeforeNextBlock = 0;
+  const pushRenderedBlocks = (blocks: string[], blankLinesBefore: number): void => {
+    const effectiveBlankLinesBefore = renderedBlocks.length === 0 ? blankLinesBefore : Math.max(blankLinesBefore, minimumBlankLinesBeforeNextBlock);
+    for (const [blockIndex, block] of blocks.entries()) {
+      renderedBlocks.push({ text: block, blankLinesBefore: blockIndex === 0 ? effectiveBlankLinesBefore : 0 });
+    }
+    minimumBlankLinesBeforeNextBlock = 0;
+  };
+  const lines = normalizedMarkdown.split("\n");
+  let index = 0;
+  let pendingBlankLines = 0;
+  while (index < lines.length) {
+    const line = lines[index] ?? "";
+    const nextLine = lines[index + 1] ?? "";
+    if (line.trim().length === 0) {
+      pendingBlankLines += 1;
+      index += 1;
+      continue;
+    }
+    const heading = matchMarkdownHeadingLine(line);
+    if (heading) {
+      pushRenderedBlocks(renderMarkdownTextBlock(line), renderedBlocks.length === 0 ? pendingBlankLines : Math.max(pendingBlankLines, 1));
+      pendingBlankLines = 0;
+      minimumBlankLinesBeforeNextBlock = 1;
+      index += 1;
+      continue;
+    }
+    const fence = parseMarkdownFence(line);
+    if (fence) {
+      const block = collectFencedMarkdownCodeLines(lines, index, fence);
+      index = block.nextIndex;
+      pushRenderedBlocks(renderMarkdownCodeBlock(block.codeLines.join("\n"), fence.info), pendingBlankLines);
+      pendingBlankLines = 0;
+      continue;
+    }
+    if (line.includes("|") && isMarkdownTableSeparator(nextLine)) {
+      const block = collectMarkdownTableBlockLines(lines, index);
+      index = block.nextIndex;
+      pushRenderedBlocks(renderMarkdownTableBlock(block.tableLines), pendingBlankLines);
+      pendingBlankLines = 0;
+      continue;
+    }
+    if (/^\s*>/.test(line)) {
+      const block = collectQuoteBlockLines(lines, index);
+      index = block.nextIndex;
+      pushRenderedBlocks(renderMarkdownQuoteBlock(block.quoteLines), pendingBlankLines);
+      pendingBlankLines = 0;
+      continue;
+    }
+    const block = collectMarkdownTextBlockLines(lines, index);
+    index = block.nextIndex;
+    pushRenderedBlocks(renderMarkdownTextBlock(block.textLines.join("\n")), pendingBlankLines);
+    pendingBlankLines = 0;
+  }
+  return renderedBlocks;
+}
+
+function chunkTelegramRenderedMarkdownBlocks(renderedBlocks: TelegramRenderedBlockWithSpacing[]): string[] {
+  const chunks: string[] = [];
+  let current = "";
+  const flushCurrent = (): void => {
+    if (current.length === 0) return;
+    chunks.push(current);
+    current = "";
+  };
+  for (const block of renderedBlocks) {
+    const separator = "\n".repeat(block.blankLinesBefore + 1);
+    const candidate = current.length === 0 ? block.text : `${current}${separator}${block.text}`;
+    if (candidate.length <= MAX_MESSAGE_LENGTH) {
+      current = candidate;
+      continue;
+    }
+    flushCurrent();
+    if (block.text.length <= MAX_MESSAGE_LENGTH) {
+      current = block.text;
+      continue;
+    }
+    for (let i = 0; i < block.text.length; i += MAX_MESSAGE_LENGTH) {
+      chunks.push(block.text.slice(i, i + MAX_MESSAGE_LENGTH));
+    }
+  }
+  flushCurrent();
+  return chunks;
+}
+
+function renderMarkdownToTelegramHtmlChunks(markdown: string): string[] {
+  const normalized = normalizeMarkdownDocument(markdown);
+  if (normalized.length === 0) return [];
+  return chunkTelegramRenderedMarkdownBlocks(renderMarkdownDocumentBlocks(normalized));
+}
+
+function chunkParagraphs(text: string): string[] {
+  if (text.length <= MAX_MESSAGE_LENGTH) return [text];
+  const normalized = text.replace(/\r\n/g, "\n");
+  const paragraphs = normalized.split(/\n\n+/);
+  const chunks: string[] = [];
+  let current = "";
+  const flushCurrent = (): void => {
+    if (current.trim().length > 0) chunks.push(current);
+    current = "";
+  };
+  const splitLongBlock = (block: string): string[] => {
+    if (block.length <= MAX_MESSAGE_LENGTH) return [block];
+    const lines = block.split("\n");
+    const lineChunks: string[] = [];
+    let lineCurrent = "";
+    for (const line of lines) {
+      const candidate = lineCurrent.length === 0 ? line : `${lineCurrent}\n${line}`;
+      if (candidate.length <= MAX_MESSAGE_LENGTH) {
+        lineCurrent = candidate;
+        continue;
+      }
+      if (lineCurrent.length > 0) {
+        lineChunks.push(lineCurrent);
+        lineCurrent = "";
+      }
+      if (line.length <= MAX_MESSAGE_LENGTH) {
+        lineCurrent = line;
+        continue;
+      }
+      for (let i = 0; i < line.length; i += MAX_MESSAGE_LENGTH) {
+        lineChunks.push(line.slice(i, i + MAX_MESSAGE_LENGTH));
+      }
+    }
+    if (lineCurrent.length > 0) lineChunks.push(lineCurrent);
+    return lineChunks;
+  };
+  for (const paragraph of paragraphs) {
+    if (paragraph.length === 0) continue;
+    const parts = splitLongBlock(paragraph);
+    for (const part of parts) {
+      const candidate = current.length === 0 ? part : `${current}\n\n${part}`;
+      if (candidate.length <= MAX_MESSAGE_LENGTH) {
+        current = candidate;
+      } else {
+        flushCurrent();
+        current = part;
+      }
+    }
+  }
+  flushCurrent();
+  return chunks;
+}
+
+type TelegramRenderMode = "plain" | "markdown" | "html";
+
+interface TelegramRenderedChunk {
+  text: string;
+  parseMode?: "HTML";
+}
+
+function renderTelegramMessage(text: string, options?: { mode?: TelegramRenderMode }): TelegramRenderedChunk[] {
+  const mode = options?.mode ?? "plain";
+  if (mode === "plain") {
+    return chunkParagraphs(text).map((chunk) => ({ text: chunk }));
+  }
+  if (mode === "html") {
+    return chunkHtmlPreservingTags(text, MAX_MESSAGE_LENGTH).map((chunk) => ({ text: chunk, parseMode: "HTML" }));
+  }
+  return renderMarkdownToTelegramHtmlChunks(text).map((chunk) => ({ text: chunk, parseMode: "HTML" }));
+}
+
+function renderMarkdownPreviewText(markdown: string): string {
+  const normalized = normalizeMarkdownDocument(markdown);
+  if (normalized.length === 0) return "";
+  const output: string[] = [];
+  const lines = normalized.split("\n");
+  let activeFence: { marker: "`" | "~"; length: number } | undefined;
+  for (const rawLine of lines) {
+    const line = rawLine ?? "";
+    const fence = parseMarkdownFence(line);
+    if (activeFence) {
+      if (fence && isMatchingMarkdownFence(line, activeFence)) {
+        activeFence = undefined;
+        continue;
+      }
+      if (line.trim().length === 0) {
+        output.push("");
+        continue;
+      }
+      output.push(line);
+      continue;
+    }
+    if (fence) {
+      activeFence = { marker: fence.marker, length: fence.length };
+      continue;
+    }
+    if (line.trim().length === 0) {
+      output.push("");
+      continue;
+    }
+    if (isMarkdownTableSeparator(line)) continue;
+    const heading = matchMarkdownHeadingLine(line);
+    if (heading) {
+      output.push(stripInlineMarkdownToPlainText(heading[2] ?? ""));
+      continue;
+    }
+    const task = line.match(/^(\s*)([-*+]|\d+\.)\s+\[([ xX])\]\s+(.+)$/);
+    if (task) {
+      const indent = " ".repeat((task[1] ?? "").length);
+      const listMarker = task[2] ?? "-";
+      const checkboxMarker = (task[3] ?? " ").toLowerCase() === "x" ? "[x]" : "[ ]";
+      const taskPrefix = /^\d+\.$/.test(listMarker) ? `${listMarker} ${checkboxMarker}` : checkboxMarker;
+      output.push(`${indent}${taskPrefix} ${stripInlineMarkdownToPlainText(task[4] ?? "")}`);
+      continue;
+    }
+    const bullet = line.match(/^(\s*)[-*+]\s+(.+)$/);
+    if (bullet) {
+      output.push(`${" ".repeat((bullet[1] ?? "").length)}- ${stripInlineMarkdownToPlainText(bullet[2] ?? "")}`);
+      continue;
+    }
+    const numbered = line.match(/^(\s*\d+\.)\s+(.+)$/);
+    if (numbered) {
+      output.push(`${numbered[1]} ${stripInlineMarkdownToPlainText(numbered[2] ?? "")}`);
+      continue;
+    }
+    const quote = line.match(/^\s*>\s?(.+)$/);
+    if (quote) {
+      output.push(`> ${stripInlineMarkdownToPlainText(quote[1] ?? "")}`);
+      continue;
+    }
+    if (/^\s*([-*_]\s*){3,}\s*$/.test(line)) {
+      output.push("────────");
+      continue;
+    }
+    output.push(stripInlineMarkdownToPlainText(line));
+  }
+  return output.join("\n");
+}
+
 
 // ─── Queue ───────────────────────────────────────────────────────────
 
@@ -1144,15 +1806,16 @@ export default function (pi: ExtensionAPI) {
 
     // Send text / markdown
     if (cleanText.trim()) {
-      const html = markdownToTelegramHtml(cleanText);
-      const chunks = splitTelegramHtml(html);
+      const chunks = renderTelegramMessage(cleanText, { mode: "markdown" });
       let replyTo = activeTurn?.sourceMessageId;
       for (let i = 0; i < chunks.length; i++) {
-        const sent = await sendMessage(botToken, chatId, chunks[i], {
-          parse_mode: "HTML",
+        const chunk = chunks[i];
+        const opts: { parse_mode?: string; reply_to_message_id?: number; disable_web_page_preview?: boolean } = {
+          parse_mode: chunk.parseMode,
           reply_to_message_id: i === 0 ? replyTo : undefined,
           disable_web_page_preview: true,
-        });
+        };
+        const sent = await sendMessage(botToken, chatId, chunk.text, opts);
         if (sent && i === 0 && chunks.length > 1) {
           replyTo = undefined; // Only reply to source on first chunk
         }
@@ -1196,17 +1859,21 @@ export default function (pi: ExtensionAPI) {
 
   async function updatePreview(text: string, ctx: ExtensionContext): Promise<void> {
     if (!chatId || !activeTurn) return;
-    const html = markdownToTelegramHtml(text);
+    const preview = renderMarkdownPreviewText(text);
+    const suffix = "…";
+    const safePreview = preview.length > MAX_MESSAGE_LENGTH - suffix.length
+      ? preview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
+      : preview + suffix;
     if (previewMessageId) {
       // Try edit
-      const ok = await editMessageText(botToken, chatId, previewMessageId, html + "…", { parse_mode: "HTML" });
+      const ok = await editMessageText(botToken, chatId, previewMessageId, safePreview);
       if (!ok) {
         // Message too old or changed, send new
-        const sent = await sendMessage(botToken, chatId, html + "…", { parse_mode: "HTML" });
+        const sent = await sendMessage(botToken, chatId, safePreview);
         if (sent) previewMessageId = sent.message_id;
       }
     } else {
-      const sent = await sendMessage(botToken, chatId, html + "…", { parse_mode: "HTML" });
+      const sent = await sendMessage(botToken, chatId, safePreview);
       if (sent) previewMessageId = sent.message_id;
     }
     previewText = text;
@@ -1214,10 +1881,19 @@ export default function (pi: ExtensionAPI) {
 
   async function finalizePreview(finalText: string): Promise<void> {
     if (!chatId || !previewMessageId) return;
-    const html = markdownToTelegramHtml(finalText);
-    const ok = await editMessageText(botToken, chatId, previewMessageId, html, { parse_mode: "HTML" });
+    const chunks = renderTelegramMessage(finalText, { mode: "markdown" });
+    if (chunks.length === 0) {
+      previewMessageId = undefined;
+      previewText = "";
+      return;
+    }
+    const first = chunks[0];
+    const ok = await editMessageText(botToken, chatId, previewMessageId, first.text, { parse_mode: first.parseMode });
     if (!ok) {
-      await sendMessage(botToken, chatId, html, { parse_mode: "HTML" });
+      await sendMessage(botToken, chatId, first.text, { parse_mode: first.parseMode });
+    }
+    for (let i = 1; i < chunks.length; i++) {
+      await sendMessage(botToken, chatId, chunks[i].text, { parse_mode: chunks[i].parseMode });
     }
     previewMessageId = undefined;
     previewText = "";
