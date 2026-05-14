@@ -163,7 +163,9 @@ async function acquireLock(
     if (isStale(existing)) {
       locks[hash] = { pid: process.pid, ts: Date.now(), chatId, allowedUserId };
       await writeLocks(locks);
-      return { acquired: true };
+      const verify = await readLocks();
+      if (verify[hash]?.pid === process.pid) return { acquired: true };
+      return { acquired: false, existing: verify[hash] };
     }
 
     // Cross-platform PID liveness check
@@ -175,12 +177,16 @@ async function acquireLock(
       // PID dead → take over
       locks[hash] = { pid: process.pid, ts: Date.now(), chatId, allowedUserId };
       await writeLocks(locks);
-      return { acquired: true };
+      const verify = await readLocks();
+      if (verify[hash]?.pid === process.pid) return { acquired: true };
+      return { acquired: false, existing: verify[hash] };
     }
   }
   locks[hash] = { pid: process.pid, ts: Date.now(), chatId, allowedUserId };
   await writeLocks(locks);
-  return { acquired: true };
+  const verify = await readLocks();
+  if (verify[hash]?.pid === process.pid) return { acquired: true };
+  return { acquired: false, existing: verify[hash] };
 }
 
 async function releaseLock(botToken: string): Promise<void> {
@@ -210,12 +216,13 @@ function tgApiUrl(botToken: string, method: string): string {
   return `https://api.telegram.org/bot${botToken}/${method}`;
 }
 
-async function tgFetch<T>(botToken: string, method: string, body?: unknown): Promise<T | undefined> {
+async function tgFetch<T>(botToken: string, method: string, body?: unknown, signal?: AbortSignal): Promise<T | undefined> {
   try {
     const res = await fetch(tgApiUrl(botToken, method), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,
+      signal,
     });
     const json = (await res.json()) as { ok: boolean; result?: T; description?: string };
     if (!json.ok) {
@@ -235,9 +242,9 @@ async function deleteWebhook(botToken: string): Promise<void> {
 
 async function getUpdates(
   botToken: string,
-  opts: { offset?: number; limit?: number; timeout?: number; allowed_updates?: string[] },
+  opts: { offset?: number; limit?: number; timeout?: number; allowed_updates?: string[]; signal?: AbortSignal },
 ): Promise<TelegramUpdate[]> {
-  const result = await tgFetch<TelegramUpdate[]>(botToken, "getUpdates", opts);
+  const result = await tgFetch<TelegramUpdate[]>(botToken, "getUpdates", opts, opts.signal);
   return result ?? [];
 }
 
@@ -546,6 +553,7 @@ export default function (pi: ExtensionAPI) {
   let isConnected = false;
   let isShuttingDown = false;
   let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+  let typingTimer: ReturnType<typeof setInterval> | undefined;
 
   const queue = createQueue();
   let activeTurn: ActiveTurn | undefined;
@@ -584,6 +592,7 @@ export default function (pi: ExtensionAPI) {
           limit: 10,
           timeout: 30,
           allowed_updates: ["message", "edited_message", "callback_query", "message_reaction"],
+          signal: pollingController?.signal,
         });
         for (const upd of updates) {
           lastUpdateId = upd.update_id;
@@ -601,6 +610,19 @@ export default function (pi: ExtensionAPI) {
     return new Promise((res) => setTimeout(res, ms));
   }
 
+  const TELEGRAM_COMMANDS = new Set([
+    "/start",
+    "/status",
+    "/compact",
+    "/abort",
+    "/stop",
+    "/continue",
+    "/queue",
+    "/next",
+    "/help",
+    "/model",
+  ]);
+
   function startHeartbeat() {
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(async () => {
@@ -616,6 +638,21 @@ export default function (pi: ExtensionAPI) {
     if (heartbeatTimer) {
       clearInterval(heartbeatTimer);
       heartbeatTimer = undefined;
+    }
+  }
+
+  function startTyping(chatId: number) {
+    if (typingTimer) clearInterval(typingTimer);
+    sendChatAction(botToken, chatId, "typing").catch(() => {});
+    typingTimer = setInterval(() => {
+      sendChatAction(botToken, chatId, "typing").catch(() => {});
+    }, 4000);
+  }
+
+  function stopTyping() {
+    if (typingTimer) {
+      clearInterval(typingTimer);
+      typingTimer = undefined;
     }
   }
 
@@ -649,12 +686,14 @@ export default function (pi: ExtensionAPI) {
         await updateLock(botToken, { chatId, allowedUserId });
         await setMyCommands(botToken, [
           { command: "start", description: "Show status and controls" },
-          { command: "status", description: "Show current status" },
-          { command: "compact", description: "Compact session" },
+          { command: "status", description: "Show session status, model, and usage" },
+          { command: "model", description: "Change model and thinking level" },
+          { command: "compact", description: "Compact session context" },
           { command: "abort", description: "Abort current run" },
           { command: "stop", description: "Abort and clear queue" },
           { command: "continue", description: "Send continue prompt" },
-          { command: "queue", description: "Show queue" },
+          { command: "queue", description: "Show message queue" },
+          { command: "help", description: "Show available commands" },
         ]);
         await sendMessage(botToken, cid, "✅ Connected to Pi session. Send messages or files to interact.");
       } else if (cid === chatId) {
@@ -671,8 +710,25 @@ export default function (pi: ExtensionAPI) {
 
     // Slash commands from Telegram
     if (msg.text?.startsWith("/")) {
-      await handleTelegramCommand(msg, ctx);
-      return;
+      const rawCmd = msg.text.split(" ")[0].split("@")[0];
+      if (TELEGRAM_COMMANDS.has(rawCmd)) {
+        await handleTelegramCommand(msg, ctx);
+        return;
+      }
+      // Unknown command: pass through to Pi with [telegram] tag inserted after command
+      const match = msg.text.match(/^(\/\S+)(\s+.*)?$/);
+      if (match) {
+        const [, cmd, rest] = match;
+        msg.text = `${cmd} [telegram]${rest ?? ""}`;
+      }
+    } else {
+      // Non-command message: prefix with [telegram]
+      const text = msg.text ?? msg.caption;
+      if (text) {
+        const prefixed = `[telegram] ${text}`;
+        if (msg.text) msg.text = prefixed;
+        if (msg.caption) msg.caption = prefixed;
+      }
     }
 
     // Build prompt text and files
@@ -773,6 +829,32 @@ export default function (pi: ExtensionAPI) {
       case "/status":
         await sendStatus(cid, ctx);
         break;
+      case "/help":
+        await sendHelp(cid);
+        break;
+      case "/model": {
+        const models = ctx.modelRegistry.getAvailable().map((m) => ({
+          id: `${m.provider}:${m.id}`,
+          name: m.name,
+          provider: m.provider,
+        }));
+        if (!models.length) {
+          await sendMessage(botToken, cid, "❌ No models available.");
+          break;
+        }
+        const keyboard = {
+          inline_keyboard: models.map((m, idx) => [{
+            text: `${m.name} (${m.provider})`,
+            callback_data: `model:${idx}`,
+          }]),
+        };
+        await tgFetch(botToken, "sendMessage", {
+          chat_id: cid,
+          text: "Select a model:",
+          reply_markup: keyboard,
+        });
+        break;
+      }
       case "/compact":
         if (ctx.isIdle()) {
           ctx.compact({});
@@ -803,8 +885,7 @@ export default function (pi: ExtensionAPI) {
         await dispatchNext(ctx);
         break;
       default:
-        // Unknown command: treat as prompt
-        await handleMessage({ ...msg, text: msg.text!.replace(/^\//, "") }, ctx, false);
+        await sendMessage(botToken, cid, "❓ Unknown command. Use /help for available commands.");
     }
   }
 
@@ -832,6 +913,53 @@ export default function (pi: ExtensionAPI) {
     if (q.data === "queue:clear") {
       queue.clear();
       await sendQueueStatus(cid);
+      return;
+    }
+
+    // Model selection
+    if (q.data.startsWith("model:")) {
+      const idx = Number(q.data.slice("model:".length));
+      const models = ctx.modelRegistry.getAvailable();
+      const model = models[idx];
+      if (!model) {
+        await sendMessage(botToken, cid, "❌ Model not found.");
+        return;
+      }
+      const thinkingLevels: string[] = ["off", "minimal", "low", "medium", "high", "xhigh"];
+      const keyboard = {
+        inline_keyboard: thinkingLevels.map((lvl) => [{
+          text: lvl,
+          callback_data: `thinking:${idx}:${lvl}`,
+        }]),
+      };
+      await tgFetch(botToken, "sendMessage", {
+        chat_id: cid,
+        text: `Selected <b>${model.name}</b>. Choose thinking level:`,
+        parse_mode: "HTML",
+        reply_markup: keyboard,
+      });
+      return;
+    }
+
+    // Thinking level selection
+    if (q.data.startsWith("thinking:")) {
+      const parts = q.data.split(":");
+      const idx = Number(parts[1]);
+      const level = parts[2];
+      const models = ctx.modelRegistry.getAvailable();
+      const model = models[idx];
+      if (!model) {
+        await sendMessage(botToken, cid, "❌ Model not found.");
+        return;
+      }
+      const ok = await pi.setModel(model);
+      if (!ok) {
+        await sendMessage(botToken, cid, "❌ Failed to switch model (no API key?).");
+        return;
+      }
+      pi.setThinkingLevel(level as any);
+      const currentLevel = pi.getThinkingLevel();
+      await sendMessage(botToken, cid, `✅ Model set to <b>${model.name}</b>\n💭 Thinking: <code>${currentLevel}</code>`, { parse_mode: "HTML" });
       return;
     }
 
@@ -906,13 +1034,51 @@ export default function (pi: ExtensionAPI) {
   // ─── Status Messages ───────────────────────────────────────────────
 
   async function sendStatus(cid: number, ctx: ExtensionContext): Promise<void> {
+    const usage = ctx.getContextUsage();
+    const model = ctx.model;
+    const currentModel = model ? `${model.name} (${model.provider})` : "none";
+    const thinking = pi.getThinkingLevel();
+
     const lines = [
       `<b>Pi Telegram</b>`,
       ``,
       `Status: ${isConnected ? "🟢 connected" : "🔴 disconnected"}`,
+      `Model: <code>${currentModel}</code>`,
+      `Thinking: <code>${thinking}</code>`,
       `Queue: ${queue.length()}`,
       `Idle: ${ctx.isIdle() ? "yes" : "no"}`,
-      `Session: <code>${sessionId}</code>`,
+    ];
+
+    if (usage) {
+      if (usage.tokens !== null) {
+        lines.push(`Context: ${usage.tokens.toLocaleString()} / ${usage.contextWindow.toLocaleString()} tokens (${usage.percent?.toFixed(1) ?? "?"}%)`);
+      } else {
+        lines.push(`Context: unknown / ${usage.contextWindow.toLocaleString()} tokens`);
+      }
+    }
+
+    lines.push(`Session: <code>${sessionId}</code>`);
+
+    await sendMessage(botToken, cid, lines.join("\n"), { parse_mode: "HTML" });
+  }
+
+  async function sendHelp(cid: number): Promise<void> {
+    const lines = [
+      `<b>Telegram Commands</b>`,
+      ``,
+      `<code>/start</code> — Connect to Pi session`,
+      `<code>/status</code> — Show session status, model, and usage`,
+      `<code>/model</code> — Change model and thinking level`,
+      `<code>/compact</code> — Compact session context`,
+      `<code>/continue</code> — Send continue prompt`,
+      `<code>/queue</code> — Show message queue`,
+      `<code>/next</code> — Skip current and run next queued item`,
+      `<code>/abort</code> — Abort current run`,
+      `<code>/stop</code> — Abort and clear queue`,
+      `<code>/help</code> — Show this help`,
+      ``,
+      `Send messages or files to interact with Pi.`,
+      `Reactions: 👍⚡❤ promote, 👎👻💔 remove.`,
     ];
     await sendMessage(botToken, cid, lines.join("\n"), { parse_mode: "HTML" });
   }
@@ -1049,6 +1215,7 @@ export default function (pi: ExtensionAPI) {
     }
 
     await deleteWebhook(botToken);
+    isShuttingDown = false;
     isConnected = true;
     updateStatus(ctx, "connected (auto)");
     startHeartbeat();
@@ -1060,10 +1227,13 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_shutdown", async (_event, ctx) => {
     isShuttingDown = true;
     stopHeartbeat();
+    stopTyping();
     pollingController?.abort();
     if (pollingPromise) {
       await pollingPromise.catch(() => undefined);
     }
+    pollingPromise = undefined;
+    pollingController = undefined;
     await releaseLock(botToken);
     isConnected = false;
     updateStatus(ctx, "disconnected");
@@ -1074,7 +1244,7 @@ export default function (pi: ExtensionAPI) {
     // Clear preview state for new turn
     previewMessageId = undefined;
     previewText = "";
-    await sendChatAction(botToken, activeTurn.chatId, "typing");
+    startTyping(activeTurn.chatId);
   });
 
   pi.on("message_update", async (event, ctx) => {
@@ -1093,6 +1263,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("agent_end", async (_event, ctx) => {
+    stopTyping();
     if (!activeTurn) return;
 
     // Find last assistant message
@@ -1153,6 +1324,7 @@ export default function (pi: ExtensionAPI) {
         await writeLocks(locks);
       }
       await deleteWebhook(botToken);
+      isShuttingDown = false;
       isConnected = true;
       updateStatus(ctx, "connected");
       startHeartbeat();
@@ -1167,10 +1339,13 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => {
       isShuttingDown = true;
       stopHeartbeat();
+      stopTyping();
       pollingController?.abort();
       if (pollingPromise) {
         await pollingPromise.catch(() => undefined);
       }
+      pollingPromise = undefined;
+      pollingController = undefined;
       await releaseLock(botToken);
       isConnected = false;
       isShuttingDown = false;
