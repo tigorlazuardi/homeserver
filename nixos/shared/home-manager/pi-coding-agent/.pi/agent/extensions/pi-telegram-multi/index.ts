@@ -1256,6 +1256,7 @@ export default function (pi: ExtensionAPI) {
   let previewMessageId: number | undefined;
   let previewText = "";
   let pendingAttachments: string[] = [];
+  let isFinalizing = false;
 
   // ─── Helpers ───────────────────────────────────────────────────────
 
@@ -1807,6 +1808,10 @@ export default function (pi: ExtensionAPI) {
     // Send text / markdown
     if (cleanText.trim()) {
       const chunks = renderTelegramMessage(cleanText, { mode: "markdown" });
+      console.log(`[pi-telegram-multi] sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
+      for (const [i, chunk] of chunks.entries()) {
+        console.log(`[pi-telegram-multi] chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
+      }
       let replyTo = activeTurn?.sourceMessageId;
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
@@ -1858,12 +1863,13 @@ export default function (pi: ExtensionAPI) {
   // ─── Streaming Preview ─────────────────────────────────────────────
 
   async function updatePreview(text: string, ctx: ExtensionContext): Promise<void> {
-    if (!chatId || !activeTurn) return;
+    if (!chatId || !activeTurn || isFinalizing) return;
     const preview = renderMarkdownPreviewText(text);
     const suffix = "…";
     const safePreview = preview.length > MAX_MESSAGE_LENGTH - suffix.length
       ? preview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
       : preview + suffix;
+    console.log(`[pi-telegram-multi] updatePreview: textLen=${text.length} previewLen=${preview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
     if (previewMessageId) {
       // Try edit
       const ok = await editMessageText(botToken, chatId, previewMessageId, safePreview);
@@ -1980,37 +1986,45 @@ export default function (pi: ExtensionAPI) {
   pi.on("agent_end", async (_event, ctx) => {
     stopTyping();
     if (!activeTurn) return;
+    isFinalizing = true;
 
-    // Find last assistant message
-    const entries = ctx.sessionManager.getEntries();
-    let lastAssistantText = "";
-    for (let i = entries.length - 1; i >= 0; i--) {
-      const e = entries[i];
-      if (e.role === "assistant") {
-        lastAssistantText =
-          e.content
-            ?.filter((c) => c.type === "text")
-            .map((c) => ("text" in c ? c.text : ""))
-            .join("") ?? "";
-        break;
+    try {
+      // Find last assistant message
+      const entries = ctx.sessionManager.getEntries();
+      let lastAssistantText = "";
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const e = entries[i];
+        if (e.role === "assistant") {
+          lastAssistantText =
+            e.content
+              ?.filter((c) => c.type === "text")
+              .map((c) => ("text" in c ? c.text : ""))
+              .join("") ?? "";
+          break;
+        }
       }
-    }
 
-    if (lastAssistantText) {
-      // Delete preview message to avoid duplicate/partial text
-      if (previewMessageId) {
-        await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => {});
-        previewMessageId = undefined;
-        previewText = "";
+      console.log(`[pi-telegram-multi] agent_end: textLen=${lastAssistantText.length} last50="${lastAssistantText.slice(-50)}"`);
+
+      if (lastAssistantText) {
+        // Delete preview message to avoid duplicate/partial text
+        if (previewMessageId) {
+          const deleted = await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => false);
+          console.log(`[pi-telegram-multi] preview deleted=${deleted} msgId=${previewMessageId}`);
+          previewMessageId = undefined;
+          previewText = "";
+        }
+        await sendReply(lastAssistantText, ctx);
       }
-      await sendReply(lastAssistantText, ctx);
+
+      activeTurn = undefined;
+      updateStatus(ctx, "idle");
+
+      // Dispatch next queued item after a short delay
+      setTimeout(() => dispatchNext(ctx), 500);
+    } finally {
+      isFinalizing = false;
     }
-
-    activeTurn = undefined;
-    updateStatus(ctx, "idle");
-
-    // Dispatch next queued item after a short delay
-    setTimeout(() => dispatchNext(ctx), 500);
   });
 
   // ─── Commands ──────────────────────────────────────────────────────
