@@ -152,6 +152,13 @@ interface ActiveTurn {
   sourceMessageId: number;
 }
 
+function stripTrailingEllipsis(text: string): string {
+  let cleaned = text.trimEnd();
+  cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd();
+  cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd();
+  return cleaned || text;
+}
+
 function guessImageMimeType(filePath: string): string | undefined {
   const normalized = filePath.toLowerCase();
   if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) return "image/jpeg";
@@ -1949,12 +1956,14 @@ export default function (pi: ExtensionAPI) {
     const { text: cleanText, voices, buttons } = parseHiddenBlocks(text);
 
     // Send text / markdown
-    if (cleanText.trim()) {
-      const chunks = renderTelegramMessage(cleanText, { mode: "markdown" });
+    const strippedCleanText = stripTrailingEllipsis(cleanText);
+    if (strippedCleanText.trim()) {
+      const chunks = renderTelegramMessage(strippedCleanText, { mode: "markdown" });
       logInfo(`sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
       for (const [i, chunk] of chunks.entries()) {
         logInfo(`chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
       }
+      logInfo(`sendReply: chunks=${chunks.length} textEnd="${strippedCleanText.slice(-30)}"`);
       const replyTo = activeTurn?.sourceMessageId;
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
@@ -2005,14 +2014,16 @@ export default function (pi: ExtensionAPI) {
   async function updatePreview(text: string, ctx: ExtensionContext): Promise<void> {
     if (!chatId || !activeTurn || isFinalizing) return;
     const preview = renderMarkdownPreviewText(text);
+    // Strip any trailing ellipsis LLM may have already added, before we add our own preview suffix
+    const strippedPreview = stripTrailingEllipsis(preview);
     const suffix = "…";
-    const safePreview = preview.length > MAX_MESSAGE_LENGTH - suffix.length
-      ? preview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
-      : preview + suffix;
+    const safePreview = strippedPreview.length > MAX_MESSAGE_LENGTH - suffix.length
+      ? strippedPreview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
+      : strippedPreview + suffix;
     // Escape HTML so we can send preview with parse_mode: HTML — matches llblab behavior
     // where preview and final both use HTML parse mode, avoiding parse_mode switch issues
     const escapedPreview = escapeHtml(safePreview);
-    logInfo(`updatePreview: textLen=${text.length} previewLen=${preview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
+    logInfo(`updatePreview: textLen=${text.length} previewLen=${preview.length} strippedLen=${strippedPreview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
     if (previewMessageId) {
       // Try edit (always HTML parse mode)
       const ok = await editMessageText(botToken, chatId, previewMessageId, escapedPreview, { parse_mode: "HTML" });
@@ -2169,12 +2180,7 @@ export default function (pi: ExtensionAPI) {
       logInfo(`agent_end: entries=${entries.length} textLen=${lastAssistantText.length}`);
 
       if (lastAssistantText.trim()) {
-        // Strip trailing ellipsis that LLMs sometimes append
-        // Handle both U+2026 … and three+ dots ... .... etc.
-        let cleaned = lastAssistantText.trimEnd();
-        cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd();
-        cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd(); // second pass for mixed patterns
-        const finalText = cleaned || lastAssistantText;
+        const finalText = stripTrailingEllipsis(lastAssistantText);
         logInfo(`agent_end: ellipsisStrip originalEnd="${lastAssistantText.slice(-20)}" cleanedEnd="${finalText.slice(-20)}"`);
         if (previewMessageId) {
           await finalizePreview(finalText);
