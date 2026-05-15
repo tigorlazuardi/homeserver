@@ -23,5 +23,16 @@
   "doubleEscapeAction": "tree",
   "extensions": [
     "+extensions/pi-telegram-multi/index.ts"
-  ]
+  ],
+  "unipi": {
+    "info": {
+      "showOnBoot": false,
+      "bootTimeoutMs": 8000,
+      "groups": {
+        "overview": {
+          "show": true
+        }
+      }
+    }
+  }
 }
