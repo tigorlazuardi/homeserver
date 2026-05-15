@@ -10,11 +10,11 @@
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-notify",
     "npm:pi-nano-context",
-    "npm:pi-observational-memory",
     "npm:pi-rustdex",
     "npm:@pi-unipi/web-api",
     "npm:@vanillagreen/pi-caveman",
-    "npm:@tintinweb/pi-subagents"
+    "npm:@tintinweb/pi-subagents",
+    "npm:@pi-unipi/compactor"
   ],
   "editorPaddingX": 1,
   "doubleEscapeAction": "tree"
