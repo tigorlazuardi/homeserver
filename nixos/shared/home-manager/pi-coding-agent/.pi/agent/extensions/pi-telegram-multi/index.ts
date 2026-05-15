@@ -2009,17 +2009,20 @@ export default function (pi: ExtensionAPI) {
     const safePreview = preview.length > MAX_MESSAGE_LENGTH - suffix.length
       ? preview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
       : preview + suffix;
+    // Escape HTML so we can send preview with parse_mode: HTML — matches llblab behavior
+    // where preview and final both use HTML parse mode, avoiding parse_mode switch issues
+    const escapedPreview = escapeHtml(safePreview);
     logInfo(`updatePreview: textLen=${text.length} previewLen=${preview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
     if (previewMessageId) {
-      // Try edit
-      const ok = await editMessageText(botToken, chatId, previewMessageId, safePreview);
+      // Try edit (always HTML parse mode)
+      const ok = await editMessageText(botToken, chatId, previewMessageId, escapedPreview, { parse_mode: "HTML" });
       if (!ok) {
         // Message too old or changed, send new
-        const sent = await sendMessage(botToken, chatId, safePreview);
+        const sent = await sendMessage(botToken, chatId, escapedPreview, { parse_mode: "HTML" });
         if (sent) previewMessageId = sent.message_id;
       }
     } else {
-      const sent = await sendMessage(botToken, chatId, safePreview);
+      const sent = await sendMessage(botToken, chatId, escapedPreview, { parse_mode: "HTML" });
       if (sent) previewMessageId = sent.message_id;
     }
     previewText = text;
@@ -2028,15 +2031,22 @@ export default function (pi: ExtensionAPI) {
   async function finalizePreview(finalText: string): Promise<void> {
     if (!chatId || !previewMessageId) return;
     const chunks = renderTelegramMessage(finalText, { mode: "markdown" });
+    logInfo(`finalizePreview: chunks=${chunks.length} previewMsgId=${previewMessageId}`);
     if (chunks.length === 0) {
       previewMessageId = undefined;
       previewText = "";
       return;
     }
     const first = chunks[0];
+    logInfo(`finalizePreview: firstChunk parseMode=${first.parseMode ?? "plain"} len=${first.text.length} textEnd="${first.text.slice(-30)}"`);
     const ok = await editMessageText(botToken, chatId, previewMessageId, first.text, { parse_mode: first.parseMode });
+    logInfo(`finalizePreview: editResult=${ok}`);
     if (!ok) {
-      await sendMessage(botToken, chatId, first.text, { parse_mode: first.parseMode });
+      // Edit failed — send new message, then delete stale preview
+      const sent = await sendMessage(botToken, chatId, first.text, { parse_mode: first.parseMode });
+      if (sent) {
+        await deleteMessage(botToken, chatId, previewMessageId).catch(() => false);
+      }
     }
     for (let i = 1; i < chunks.length; i++) {
       await sendMessage(botToken, chatId, chunks[i].text, { parse_mode: chunks[i].parseMode });
@@ -2160,10 +2170,13 @@ export default function (pi: ExtensionAPI) {
 
       if (lastAssistantText.trim()) {
         // Strip trailing ellipsis that LLMs sometimes append
-        const cleaned = lastAssistantText.trimEnd().replace(/…+$/g, "").trimEnd();
+        // Handle both U+2026 … and three+ dots ... .... etc.
+        let cleaned = lastAssistantText.trimEnd();
+        cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd();
+        cleaned = cleaned.replace(/(…+|\.{3,})\s*$/g, "").trimEnd(); // second pass for mixed patterns
         const finalText = cleaned || lastAssistantText;
+        logInfo(`agent_end: ellipsisStrip originalEnd="${lastAssistantText.slice(-20)}" cleanedEnd="${finalText.slice(-20)}"`);
         if (previewMessageId) {
-          // Convert preview message into final message (edit, don't delete)
           await finalizePreview(finalText);
         } else {
           await sendReply(finalText, ctx);

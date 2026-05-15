@@ -5,7 +5,19 @@
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-rtk-optimizer",
-    "npm:@pi-unipi/unipi"
+    "npm:@pi-unipi/unipi",
+    {
+      "source": "git:github.com/rytswd/pi-agent-extensions",
+      "extensions": [
+        "-fetch/index.ts",
+        "-notify/index.ts",
+        "-permission-gate/index.ts",
+        "-questionnaire/index.ts",
+        "-slow-mode/index.ts",
+        "-statusline/index.ts",
+        "-stash/index.ts"
+      ]
+    }
   ],
   "editorPaddingX": 1,
   "doubleEscapeAction": "tree",
