@@ -464,6 +464,15 @@ async function setMyCommands(botToken: string, commands: Array<{ command: string
   await tgFetch(botToken, "setMyCommands", { commands });
 }
 
+async function setMessageReaction(botToken: string, chatId: number, messageId: number, emoji: string): Promise<void> {
+  await tgFetch(botToken, "setMessageReaction", {
+    chat_id: chatId,
+    message_id: messageId,
+    reaction: [{ type: "emoji", emoji }],
+    is_big: false,
+  });
+}
+
 async function getMe(botToken: string): Promise<{ id: number; username: string } | undefined> {
   return tgFetch(botToken, "getMe");
 }
@@ -1370,6 +1379,12 @@ export default function (pi: ExtensionAPI) {
   let pendingAttachments: string[] = [];
   let isFinalizing = false;
 
+  // ─── Turn Tracking ─────────────────────────────────────────────────
+
+  let currentTurnSourceMsgId: number | undefined;
+  let hasUsedToolThisTurn = false;
+  let isSteering = false;
+
   // ─── Helpers ───────────────────────────────────────────────────────
 
   function updateStatus(_ctx: ExtensionContext, msg?: string) {
@@ -1633,7 +1648,7 @@ export default function (pi: ExtensionAPI) {
       chatId: cid,
       timestamp: Date.now(),
     };
-    logInfo(`handleMessage: queued textLen=${item.text.length} images=${item.images?.length ?? 0} files=${item.files?.length ?? 0} sourceMsgId=${item.sourceMessageId}`);
+    logInfo(`handleMessage: textLen=${item.text.length} images=${item.images?.length ?? 0} files=${item.files?.length ?? 0} sourceMsgId=${item.sourceMessageId} activeTurn=${activeTurn ? "yes" : "no"}`);
 
     if (isEdit) {
       // Update existing queued item from same message if present
@@ -1644,6 +1659,40 @@ export default function (pi: ExtensionAPI) {
         existing.files = item.files;
         return;
       }
+    }
+
+    // Steering: if a turn is already active, send immediately as steer
+    if (activeTurn) {
+      isSteering = true;
+      currentTurnSourceMsgId = msg.message_id;
+      hasUsedToolThisTurn = false;
+
+      await setMessageReaction(botToken, cid, msg.message_id, "🛞");
+
+      // Build payload same as dispatchNext
+      const contentParts: Array<
+        | { type: "text"; text: string }
+        | { type: "image"; data: string; mimeType: string }
+      > = [];
+      if (item.text?.trim()) contentParts.push({ type: "text", text: item.text.trim() });
+      if (item.images?.length) {
+        for (const img of item.images) {
+          const base64Img = await imagePathToBase64Content(img.source.path);
+          if (base64Img) contentParts.push(base64Img);
+        }
+      }
+      const payload = contentParts.length === 1 && contentParts[0].type === "text"
+        ? contentParts[0].text
+        : contentParts;
+
+      logInfo(`handleMessage: steering textLen=${item.text?.length ?? 0} images=${item.images?.length ?? 0}`);
+      const result = pi.sendUserMessage(payload, { deliverAs: "steer" });
+      if (result && typeof result.then === "function") {
+        result.catch((err: unknown) => {
+          logError("sendUserMessage steering rejected:", err);
+        });
+      }
+      return;
     }
 
     queue.append(item);
@@ -2128,6 +2177,19 @@ export default function (pi: ExtensionAPI) {
     previewMessageId = undefined;
     previewText = "";
     startTyping(activeTurn.chatId);
+
+    // Track turn source message for reactions
+    currentTurnSourceMsgId = activeTurn.sourceMessageId;
+    hasUsedToolThisTurn = false;
+
+    if (isSteering) {
+      // Steering turn: 🛞 was already set on the steering message
+      logInfo(`agent_start: steering turn sourceMsgId=${currentTurnSourceMsgId}`);
+    } else if (currentTurnSourceMsgId && currentTurnSourceMsgId > 0) {
+      // Normal new turn: 👀 eyes — bot received, LLM thinking
+      logInfo(`agent_start: normal turn sourceMsgId=${currentTurnSourceMsgId}`);
+      await setMessageReaction(botToken, activeTurn.chatId, currentTurnSourceMsgId, "👀");
+    }
   });
 
   pi.on("message_update", async (event, ctx) => {
@@ -2146,12 +2208,35 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
+  pi.on("tool_execution_start", async (event, ctx) => {
+    if (!activeTurn || hasUsedToolThisTurn) return;
+    hasUsedToolThisTurn = true;
+    const msgId = isSteering ? currentTurnSourceMsgId : activeTurn.sourceMessageId;
+    if (msgId && msgId > 0) {
+      logInfo(`tool_execution_start: first tool, sourceMsgId=${msgId}`);
+      await setMessageReaction(botToken, activeTurn.chatId, msgId, "⚙️");
+    }
+  });
+
   pi.on("agent_end", async (_event, ctx) => {
     stopTyping();
     if (!activeTurn) return;
     isFinalizing = true;
 
     try {
+      // Green checkmark on the message that triggered this turn
+      const doneMsgId = isSteering ? currentTurnSourceMsgId : activeTurn.sourceMessageId;
+      if (doneMsgId && doneMsgId > 0) {
+        logInfo(`agent_end: done sourceMsgId=${doneMsgId} steering=${isSteering}`);
+        await setMessageReaction(botToken, activeTurn.chatId, doneMsgId, "✅");
+      }
+
+      // Reset steering state for next turn
+      if (isSteering) {
+        isSteering = false;
+        currentTurnSourceMsgId = undefined;
+      }
+
       // Find last assistant message
       const entries = ctx.sessionManager.getEntries();
       let lastAssistantText = "";
