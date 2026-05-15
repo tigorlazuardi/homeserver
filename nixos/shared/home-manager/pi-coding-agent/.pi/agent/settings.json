@@ -17,5 +17,8 @@
     "npm:@pi-unipi/compactor"
   ],
   "editorPaddingX": 1,
-  "doubleEscapeAction": "tree"
+  "doubleEscapeAction": "tree",
+  "extensions": [
+    "+extensions/pi-telegram-multi/index.ts"
+  ]
 }

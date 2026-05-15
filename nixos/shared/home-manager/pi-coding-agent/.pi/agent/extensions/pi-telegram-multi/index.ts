@@ -7,10 +7,76 @@ import {
   readFile,
   rename,
   writeFile,
+  appendFile,
+  unlink,
+  stat,
 } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+
+// ─── Image Resize ──────────────────────────────────────────────────
+
+async function isFfmpegAvailable(): Promise<boolean> {
+  try {
+    await execFileAsync("ffmpeg", ["-version"], { timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function resizeImageWithFfmpeg(inputPath: string, outputPath: string): Promise<boolean> {
+  try {
+    await execFileAsync("ffmpeg", [
+      "-i", inputPath,
+      "-vf", "scale=2000:2000:force_original_aspect_ratio=decrease",
+      "-q:v", "2",
+      "-y",
+      outputPath,
+    ], { timeout: 30000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── File Logger ─────────────────────────────────────────────────────
+
+const LOG_BASE_DIR = join(homedir(), ".pi", "agent", "logs", "pi-telegram-multi");
+
+let currentLogFile = join(LOG_BASE_DIR, "default", "pi-telegram-multi.log");
+
+function setLogSession(sessionId: string): void {
+  currentLogFile = join(LOG_BASE_DIR, sessionId, "pi-telegram-multi.log");
+  mkdir(dirname(currentLogFile), { recursive: true }).catch(() => {});
+}
+
+async function fileLog(level: string, ...args: unknown[]): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const message = args.map((a) =>
+    typeof a === "string" ? a : JSON.stringify(a)
+  ).join(" ");
+  const line = `[${timestamp}] [${level}] ${message}\n`;
+  try {
+    await mkdir(dirname(currentLogFile), { recursive: true });
+    await appendFile(currentLogFile, line, "utf8");
+  } catch {
+    // silently ignore log write failures
+  }
+}
+
+function logInfo(...args: unknown[]): void {
+  fileLog("INFO", ...args).catch(() => {});
+}
+
+function logError(...args: unknown[]): void {
+  fileLog("ERROR", ...args).catch(() => {});
+}
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -84,6 +150,36 @@ interface QueuedItem {
 interface ActiveTurn {
   chatId: number;
   sourceMessageId: number;
+}
+
+function guessImageMimeType(filePath: string): string | undefined {
+  const normalized = filePath.toLowerCase();
+  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) return "image/jpeg";
+  if (normalized.endsWith(".png")) return "image/png";
+  if (normalized.endsWith(".webp")) return "image/webp";
+  if (normalized.endsWith(".gif")) return "image/gif";
+  return undefined;
+}
+
+const MAX_IMAGE_FILE_BYTES = 4.5 * 1024 * 1024;
+
+async function imagePathToBase64Content(path: string): Promise<{ type: "image"; data: string; mimeType: string } | undefined> {
+  try {
+    const fileStat = await stat(path);
+    logInfo(`imagePathToBase64Content: path=${path} size=${fileStat.size} bytes`);
+    if (fileStat.size > MAX_IMAGE_FILE_BYTES) {
+      logError("Image file too large after resize, skipping:", path, `${(fileStat.size / 1024 / 1024).toFixed(1)}MB`);
+      return undefined;
+    }
+    const buffer = await readFile(path);
+    const mimeType = guessImageMimeType(path) ?? "image/jpeg";
+    const base64 = Buffer.from(buffer).toString("base64");
+    logInfo(`imagePathToBase64Content: base64Len=${base64.length} mimeType=${mimeType}`);
+    return { type: "image", data: base64, mimeType };
+  } catch (err) {
+    logError("Failed to read image file:", path, err);
+    return undefined;
+  }
 }
 
 // ─── Env / Config ────────────────────────────────────────────────────
@@ -231,12 +327,12 @@ async function tgFetch<T>(botToken: string, method: string, body?: unknown, sign
     });
     const json = (await res.json()) as { ok: boolean; result?: T; description?: string };
     if (!json.ok) {
-      console.error(`[pi-telegram-multi] ${method} failed:`, json.description);
+      logError(`${method} failed (${res.status}):`, json.description, "| body:", JSON.stringify(body));
       return undefined;
     }
     return json.result;
   } catch (err) {
-    console.error(`[pi-telegram-multi] ${method} error:`, err);
+    logError(`${method} error:`, err);
     return undefined;
   }
 }
@@ -261,13 +357,13 @@ async function getUpdates(
       if (json.description?.includes("Conflict") || json.description?.includes("terminated by other")) {
         throw new Error(`409 Conflict: ${json.description}`);
       }
-      console.error(`[pi-telegram-multi] getUpdates failed:`, json.description);
+      logError(`getUpdates failed:`, json.description);
       return [];
     }
     return json.result ?? [];
   } catch (err) {
     if (err instanceof Error && err.message.includes("409 Conflict")) throw err;
-    console.error(`[pi-telegram-multi] getUpdates error:`, err);
+    logError(`getUpdates error:`, err);
     return [];
   }
 }
@@ -283,6 +379,10 @@ async function sendMessage(
   text: string,
   opts?: { parse_mode?: string; reply_to_message_id?: number; disable_web_page_preview?: boolean },
 ): Promise<TelegramMessage | undefined> {
+  if (!text || text.trim().length === 0) {
+    logError("sendMessage skipped: empty text");
+    return undefined;
+  }
   return tgFetch<TelegramMessage>(botToken, "sendMessage", {
     chat_id: chatId,
     text,
@@ -311,12 +411,12 @@ async function sendMessageMultipart(
     });
     const json = (await res.json()) as { ok: boolean; result?: TelegramMessage; description?: string };
     if (!json.ok) {
-      console.error("[pi-telegram-multi] multipart send failed:", json.description);
+      logError("multipart send failed:", json.description);
       return undefined;
     }
     return json.result;
   } catch (err) {
-    console.error("[pi-telegram-multi] multipart send error:", err);
+    logError("multipart send error:", err);
     return undefined;
   }
 }
@@ -394,7 +494,7 @@ async function downloadTelegramFile(
     await writeFile(outPath, buffer);
     return outPath;
   } catch (err) {
-    console.error("[pi-telegram-multi] download error:", err);
+    logError("download error:", err);
     return undefined;
   }
 }
@@ -1228,6 +1328,11 @@ function parseHiddenBlocks(text: string): { text: string; voices: TelegramVoiceB
 // ─── Extension ───────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI) {
+  // Global unhandled rejection catcher for this extension
+  process.on("unhandledRejection", (reason) => {
+    logError("unhandledRejection:", reason);
+  });
+
   const config = loadEnvConfig();
   if (!config) {
     // Silently disabled
@@ -1236,7 +1341,7 @@ export default function (pi: ExtensionAPI) {
 
   const botToken = config.botToken;
   const botId = getBotIdFromToken(botToken);
-  console.log(`[pi-telegram-multi] Bot ID: ${botId}`);
+  logInfo(`Bot ID: ${botId}`);
   let chatId = config.chatId;
   let allowedUserId: number | undefined = undefined; // Will be set on /start
   let botUsername = "";
@@ -1262,7 +1367,7 @@ export default function (pi: ExtensionAPI) {
 
   function updateStatus(_ctx: ExtensionContext, msg?: string) {
     const status = msg || (isConnected ? "connected" : "disconnected");
-    console.log(`[pi-telegram-multi] ${status}`);
+    logInfo(`${status}`);
   }
 
   function getSessionId(ctx: ExtensionContext): string {
@@ -1298,11 +1403,11 @@ export default function (pi: ExtensionAPI) {
         if (isShuttingDown) return;
         const errStr = String(err);
         if (errStr.includes("409 Conflict")) {
-          console.error(`[pi-telegram-multi] Bot ${botId} 409 Conflict — another poller active. Backing off 15s...`);
+          logError(`Bot ${botId} 409 Conflict — another poller active. Backing off 15s...`);
           await sleep(15_000);
           continue;
         }
-        console.error("[pi-telegram-multi] poll error:", err);
+        logError("poll error:", err);
         await sleep(5000);
       }
     }
@@ -1441,11 +1546,25 @@ export default function (pi: ExtensionAPI) {
 
     // Photos
     if (msg.photo?.length) {
-      const largest = msg.photo.reduce((a, b) =>
-        (a.file_size ?? 0) > (b.file_size ?? 0) ? a : b,
-      );
-      const path = await downloadTelegramFile(botToken, botId, cid, sid, largest.file_id, "photo.jpg");
+      // Try to find best photo: largest that fits within 2000x2000, or largest overall
+      const bestPhoto = msg.photo
+        .filter((p) => p.width && p.height)
+        .sort((a, b) => (b.file_size ?? 0) - (a.file_size ?? 0))
+        .find((p) => (p.width ?? 9999) <= 2000 && (p.height ?? 9999) <= 2000)
+        ?? msg.photo.reduce((a, b) => ((a.file_size ?? 0) > (b.file_size ?? 0) ? a : b));
+
+      let path = await downloadTelegramFile(botToken, botId, cid, sid, bestPhoto.file_id, "photo.jpg");
       if (path) {
+        // Try ffmpeg resize if available
+        const ffmpegOk = await isFfmpegAvailable();
+        if (ffmpegOk) {
+          const resizedPath = `${path}.resized.jpg`;
+          const resized = await resizeImageWithFfmpeg(path, resizedPath);
+          if (resized) {
+            try { await unlink(path); } catch {}
+            path = resizedPath;
+          }
+        }
         images.push({ type: "image", source: { type: "path", path } });
       }
     }
@@ -1507,6 +1626,7 @@ export default function (pi: ExtensionAPI) {
       chatId: cid,
       timestamp: Date.now(),
     };
+    logInfo(`handleMessage: queued textLen=${item.text.length} images=${item.images?.length ?? 0} files=${item.files?.length ?? 0} sourceMsgId=${item.sourceMessageId}`);
 
     if (isEdit) {
       // Update existing queued item from same message if present
@@ -1636,7 +1756,7 @@ export default function (pi: ExtensionAPI) {
       };
       await tgFetch(botToken, "sendMessage", {
         chat_id: cid,
-        text: `Selected <b>${model.name}</b>. Choose thinking level:`,
+        text: `Selected <b>${escapeHtml(model.name)}</b>. Choose thinking level:`,
         parse_mode: "HTML",
         reply_markup: keyboard,
       });
@@ -1661,7 +1781,7 @@ export default function (pi: ExtensionAPI) {
       }
       pi.setThinkingLevel(level as any);
       const currentLevel = pi.getThinkingLevel();
-      await sendMessage(botToken, cid, `✅ Model set to <b>${model.name}</b>\n💭 Thinking: <code>${currentLevel}</code>`, { parse_mode: "HTML" });
+      await sendMessage(botToken, cid, `✅ Model set to <b>${escapeHtml(model.name)}</b>\n💭 Thinking: <code>${escapeHtml(currentLevel)}</code>`, { parse_mode: "HTML" });
       return;
     }
 
@@ -1710,23 +1830,46 @@ export default function (pi: ExtensionAPI) {
     updateStatus(ctx, "running");
 
     try {
-      const content: Array<
+      const opts: { deliverAs?: string } = {};
+      if (item.priority > 0) opts.deliverAs = "steer";
+
+      const contentParts: Array<
         | { type: "text"; text: string }
-        | { type: "image"; source: { type: "path"; path: string } }
+        | { type: "image"; data: string; mimeType: string }
       > = [];
-      if (item.text) content.push({ type: "text", text: item.text });
-      if (item.images?.length) content.push(...item.images);
-      if (content.length === 0) {
+
+      if (item.text?.trim()) {
+        contentParts.push({ type: "text", text: item.text.trim() });
+      }
+
+      if (item.images?.length) {
+        for (const img of item.images) {
+          const base64Img = await imagePathToBase64Content(img.source.path);
+          if (base64Img) contentParts.push(base64Img);
+        }
+      }
+
+      if (contentParts.length === 0) {
         activeTurn = undefined;
         dispatchPending = false;
         setTimeout(() => dispatchNext(ctx), 100);
         return;
       }
-      const opts: { deliverAs?: string } = {};
-      if (item.priority > 0) opts.deliverAs = "steer";
-      pi.sendUserMessage(content, opts);
+
+      const payload = contentParts.length === 1 && contentParts[0].type === "text"
+        ? contentParts[0].text
+        : contentParts;
+
+      logInfo(`dispatchNext: sending textLen=${item.text?.length ?? 0}, images=${item.images?.length ?? 0}, deliverAs=${opts.deliverAs ?? "default"}`);
+      logInfo(`dispatchNext: payload=${JSON.stringify(payload).slice(0, 500)}`);
+      const result = pi.sendUserMessage(payload, opts);
+      if (result && typeof result.then === "function") {
+        result.catch((err: unknown) => {
+          logError("sendUserMessage rejected:", err);
+        });
+      }
     } catch (err) {
-      console.error("[pi-telegram-multi] dispatch error:", err);
+      logError("dispatch error:", err);
       activeTurn = undefined;
     } finally {
       dispatchPending = false;
@@ -1745,8 +1888,8 @@ export default function (pi: ExtensionAPI) {
       `<b>Pi Telegram</b>`,
       ``,
       `Status: ${isConnected ? "🟢 connected" : "🔴 disconnected"}`,
-      `Model: <code>${currentModel}</code>`,
-      `Thinking: <code>${thinking}</code>`,
+      `Model: <code>${escapeHtml(currentModel)}</code>`,
+      `Thinking: <code>${escapeHtml(thinking)}</code>`,
       `Queue: ${queue.length()}`,
       `Idle: ${ctx.isIdle() ? "yes" : "no"}`,
     ];
@@ -1792,7 +1935,7 @@ export default function (pi: ExtensionAPI) {
       return;
     }
     const lines = items.map((item, idx) => {
-      const short = item.text.slice(0, 40).replace(/\n/g, " ");
+      const short = escapeHtml(item.text.slice(0, 40).replace(/\n/g, " "));
       const more = item.text.length > 40 ? "…" : "";
       return `${idx + 1}. ${short}${more}`;
     });
@@ -1808,22 +1951,19 @@ export default function (pi: ExtensionAPI) {
     // Send text / markdown
     if (cleanText.trim()) {
       const chunks = renderTelegramMessage(cleanText, { mode: "markdown" });
-      console.log(`[pi-telegram-multi] sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
+      logInfo(`sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
       for (const [i, chunk] of chunks.entries()) {
-        console.log(`[pi-telegram-multi] chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
+        logInfo(`chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
       }
-      let replyTo = activeTurn?.sourceMessageId;
+      const replyTo = activeTurn?.sourceMessageId;
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
         const opts: { parse_mode?: string; reply_to_message_id?: number; disable_web_page_preview?: boolean } = {
           parse_mode: chunk.parseMode,
-          reply_to_message_id: i === 0 ? replyTo : undefined,
+          ...(i === 0 && replyTo && replyTo > 0 ? { reply_to_message_id: replyTo } : {}),
           disable_web_page_preview: true,
         };
-        const sent = await sendMessage(botToken, chatId, chunk.text, opts);
-        if (sent && i === 0 && chunks.length > 1) {
-          replyTo = undefined; // Only reply to source on first chunk
-        }
+        await sendMessage(botToken, chatId, chunk.text, opts);
       }
     }
 
@@ -1869,7 +2009,7 @@ export default function (pi: ExtensionAPI) {
     const safePreview = preview.length > MAX_MESSAGE_LENGTH - suffix.length
       ? preview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
       : preview + suffix;
-    console.log(`[pi-telegram-multi] updatePreview: textLen=${text.length} previewLen=${preview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
+    logInfo(`updatePreview: textLen=${text.length} previewLen=${preview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
     if (previewMessageId) {
       // Try edit
       const ok = await editMessageText(botToken, chatId, previewMessageId, safePreview);
@@ -1909,6 +2049,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     const sid = getSessionId(ctx);
+    setLogSession(sid);
     // Ensure temp dir exists
     if (chatId) {
       await prepareTempDir(botId, chatId, sid);
@@ -1922,8 +2063,8 @@ export default function (pi: ExtensionAPI) {
       lock = await acquireLock(botToken, chatId, allowedUserId);
     }
     if (!lock.acquired && lock.existing) {
-      console.log(
-        `[pi-telegram-multi] Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
+      logInfo(
+        `Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
       );
       return;
     }
@@ -1971,10 +2112,11 @@ export default function (pi: ExtensionAPI) {
   pi.on("message_update", async (event, ctx) => {
     if (!activeTurn) return;
     const msg = event.message;
+    logInfo(`message_update: role=${msg.role} contentTypes=${msg.content?.map((c: any) => c.type).join(",") ?? "none"}`);
     if (msg.role !== "assistant") return;
     const text = msg.content
-      ?.filter((c) => c.type === "text")
-      .map((c) => ("text" in c ? c.text : ""))
+      ?.filter((c: any) => c.type === "text")
+      .map((c: any) => ("text" in c ? c.text : ""))
       .join("")
       ?? "";
     // Only update preview if text grew meaningfully
@@ -2004,13 +2146,13 @@ export default function (pi: ExtensionAPI) {
         }
       }
 
-      console.log(`[pi-telegram-multi] agent_end: textLen=${lastAssistantText.length} last50="${lastAssistantText.slice(-50)}"`);
+      logInfo(`agent_end: entries=${entries.length} lastAssistantIdx=${entries.length - 1 - entries.slice().reverse().findIndex((e: any) => e.role === "assistant")} textLen=${lastAssistantText.length}`);
 
       if (lastAssistantText) {
         // Delete preview message to avoid duplicate/partial text
         if (previewMessageId) {
           const deleted = await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => false);
-          console.log(`[pi-telegram-multi] preview deleted=${deleted} msgId=${previewMessageId}`);
+          logInfo(`preview deleted=${deleted} msgId=${previewMessageId}`);
           previewMessageId = undefined;
           previewText = "";
         }

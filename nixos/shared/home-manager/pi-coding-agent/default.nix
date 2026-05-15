@@ -15,6 +15,7 @@
       bun
       nodejs
       zellij # Keep session alive
+      ffmpeg
     ]);
 
   home.file.".pi".source =
