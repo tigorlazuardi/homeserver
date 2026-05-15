@@ -2131,14 +2131,6 @@ export default function (pi: ExtensionAPI) {
     isFinalizing = true;
 
     try {
-      // Always delete preview message first to avoid leaving stale "…" suffix
-      if (previewMessageId) {
-        const deleted = await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => false);
-        logInfo(`preview deleted=${deleted} msgId=${previewMessageId}`);
-        previewMessageId = undefined;
-        previewText = "";
-      }
-
       // Find last assistant message
       const entries = ctx.sessionManager.getEntries();
       let lastAssistantText = "";
@@ -2169,7 +2161,13 @@ export default function (pi: ExtensionAPI) {
       if (lastAssistantText.trim()) {
         // Strip trailing ellipsis that LLMs sometimes append
         const cleaned = lastAssistantText.trimEnd().replace(/…+$/g, "").trimEnd();
-        await sendReply(cleaned || lastAssistantText, ctx);
+        const finalText = cleaned || lastAssistantText;
+        if (previewMessageId) {
+          // Convert preview message into final message (edit, don't delete)
+          await finalizePreview(finalText);
+        } else {
+          await sendReply(finalText, ctx);
+        }
       }
 
       activeTurn = undefined;
