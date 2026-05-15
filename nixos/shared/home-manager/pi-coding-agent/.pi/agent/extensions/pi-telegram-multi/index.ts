@@ -2131,32 +2131,45 @@ export default function (pi: ExtensionAPI) {
     isFinalizing = true;
 
     try {
+      // Always delete preview message first to avoid leaving stale "…" suffix
+      if (previewMessageId) {
+        const deleted = await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => false);
+        logInfo(`preview deleted=${deleted} msgId=${previewMessageId}`);
+        previewMessageId = undefined;
+        previewText = "";
+      }
+
       // Find last assistant message
       const entries = ctx.sessionManager.getEntries();
       let lastAssistantText = "";
       for (let i = entries.length - 1; i >= 0; i--) {
         const e = entries[i];
         if (e.role === "assistant") {
-          lastAssistantText =
-            e.content
-              ?.filter((c) => c.type === "text")
-              .map((c) => ("text" in c ? c.text : ""))
-              .join("") ?? "";
+          // Try multiple content shapes for robust text extraction
+          const content = e.content;
+          if (typeof content === "string") {
+            lastAssistantText = content;
+          } else if (Array.isArray(content)) {
+            lastAssistantText = content
+              .map((c: any) => {
+                if (c.type === "text" && c.text) return c.text;
+                if (c.type === "text" && typeof c.content === "string") return c.content;
+                return "";
+              })
+              .join("");
+          } else if (content && typeof content.text === "string") {
+            lastAssistantText = content.text;
+          }
           break;
         }
       }
 
-      logInfo(`agent_end: entries=${entries.length} lastAssistantIdx=${entries.length - 1 - entries.slice().reverse().findIndex((e: any) => e.role === "assistant")} textLen=${lastAssistantText.length}`);
+      logInfo(`agent_end: entries=${entries.length} textLen=${lastAssistantText.length}`);
 
-      if (lastAssistantText) {
-        // Delete preview message to avoid duplicate/partial text
-        if (previewMessageId) {
-          const deleted = await deleteMessage(botToken, activeTurn.chatId, previewMessageId).catch(() => false);
-          logInfo(`preview deleted=${deleted} msgId=${previewMessageId}`);
-          previewMessageId = undefined;
-          previewText = "";
-        }
-        await sendReply(lastAssistantText, ctx);
+      if (lastAssistantText.trim()) {
+        // Strip trailing ellipsis that LLMs sometimes append
+        const cleaned = lastAssistantText.trimEnd().replace(/…+$/g, "").trimEnd();
+        await sendReply(cleaned || lastAssistantText, ctx);
       }
 
       activeTurn = undefined;
