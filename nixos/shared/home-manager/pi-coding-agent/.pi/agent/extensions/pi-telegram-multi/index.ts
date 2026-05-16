@@ -1355,7 +1355,7 @@ export default function (pi: ExtensionAPI) {
     return;
   }
 
-  const botToken = config.botToken;
+  let botToken = config.botToken;
   const botId = getBotIdFromToken(botToken);
   logInfo(`Bot ID: ${botId}`);
   let chatId = config.chatId;
@@ -1369,13 +1369,10 @@ export default function (pi: ExtensionAPI) {
   let isConnected = false;
   let isShuttingDown = false;
   let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
-  let typingTimer: ReturnType<typeof setInterval> | undefined;
 
   const queue = createQueue();
   let activeTurn: ActiveTurn | undefined;
   let dispatchPending = false;
-  let previewMessageId: number | undefined;
-  let previewText = "";
   let pendingAttachments: string[] = [];
   let isFinalizing = false;
 
@@ -1385,11 +1382,69 @@ export default function (pi: ExtensionAPI) {
   let hasUsedToolThisTurn = false;
   let isSteering = false;
 
+  // ─── Status Footer ───────────────────────────────────────────────────
+
+  const TELEGRAM_STATUS_FOOTER = "\n\n🟢 <i>Telegram</i>";
+
   // ─── Helpers ───────────────────────────────────────────────────────
 
   function updateStatus(_ctx: ExtensionContext, msg?: string) {
     const status = msg || (isConnected ? "connected" : "disconnected");
     logInfo(`${status}`);
+  }
+
+  function refreshEnvConfig(): TelegramConfig | undefined {
+    const newToken = process.env.TELEGRAM_BOT_TOKEN;
+    const newChatId = process.env.TELEGRAM_CHAT_ID
+      ? Number(process.env.TELEGRAM_CHAT_ID)
+      : undefined;
+    if (!newToken) return undefined;
+    return { botToken: newToken, chatId: newChatId };
+  }
+
+  async function stopTelegramSession(): Promise<void> {
+    if (!isConnected) return;
+    isShuttingDown = true;
+    stopHeartbeat();
+    pollingController?.abort();
+    if (pollingPromise) {
+      await pollingPromise.catch(() => undefined);
+    }
+    pollingPromise = undefined;
+    pollingController = undefined;
+    await releaseLock(botToken);
+    isConnected = false;
+    isShuttingDown = false;
+  }
+
+  async function startTelegramSession(ctx: ExtensionContext): Promise<boolean> {
+    if (isConnected) return true;
+    let lock = await acquireLock(botToken, chatId, allowedUserId);
+    if (!lock.acquired && lock.existing) {
+      await sleep(2000);
+      lock = await acquireLock(botToken, chatId, allowedUserId);
+    }
+    if (!lock.acquired && lock.existing) {
+      logInfo(
+        `Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago).`,
+      );
+      return false;
+    }
+
+    const me = await getMe(botToken);
+    if (me) {
+      botUsername = me.username;
+      botNumericId = me.id;
+    }
+
+    await deleteWebhook(botToken);
+    isShuttingDown = false;
+    isConnected = true;
+    updateStatus(ctx, "connected (reload)");
+    startHeartbeat();
+    pollingController = new AbortController();
+    pollingPromise = pollLoop(ctx);
+    return true;
   }
 
   function getSessionId(ctx: ExtensionContext): string {
@@ -1450,6 +1505,7 @@ export default function (pi: ExtensionAPI) {
     "/next",
     "/help",
     "/model",
+    "/reload",
   ]);
 
   function startHeartbeat() {
@@ -1467,21 +1523,6 @@ export default function (pi: ExtensionAPI) {
     if (heartbeatTimer) {
       clearInterval(heartbeatTimer);
       heartbeatTimer = undefined;
-    }
-  }
-
-  function startTyping(chatId: number) {
-    if (typingTimer) clearInterval(typingTimer);
-    sendChatAction(botToken, chatId, "typing").catch(() => {});
-    typingTimer = setInterval(() => {
-      sendChatAction(botToken, chatId, "typing").catch(() => {});
-    }, 4000);
-  }
-
-  function stopTyping() {
-    if (typingTimer) {
-      clearInterval(typingTimer);
-      typingTimer = undefined;
     }
   }
 
@@ -1522,6 +1563,7 @@ export default function (pi: ExtensionAPI) {
           { command: "stop", description: "Abort and clear queue" },
           { command: "continue", description: "Send continue prompt" },
           { command: "queue", description: "Show message queue" },
+          { command: "reload", description: "Reload extensions and re-check env" },
           { command: "help", description: "Show available commands" },
         ]);
         await sendMessage(botToken, cid, "✅ Connected to Pi session. Send messages or files to interact.");
@@ -1762,6 +1804,51 @@ export default function (pi: ExtensionAPI) {
         ctx.abort();
         await dispatchNext(ctx);
         break;
+      case "/reload": {
+        await sendMessage(botToken, cid, "🔄 Reloading...");
+        try {
+          // Re-check env first
+          const newConfig = refreshEnvConfig();
+          if (!newConfig || !newConfig.botToken || !newConfig.chatId) {
+            // Env missing — stop if running
+            if (isConnected) {
+              await stopTelegramSession();
+              await sendMessage(botToken, cid, "🔴 Telegram session stopped — env TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing.");
+            } else {
+              await sendMessage(botToken, cid, "ℹ️ Telegram session already stopped — env missing.");
+            }
+          } else if (!isConnected) {
+            // Env present but not connected — update config and start
+            botToken = newConfig.botToken;
+            chatId = newConfig.chatId;
+            const started = await startTelegramSession(ctx);
+            if (started) {
+              await sendMessage(botToken, cid, "🟢 Telegram session started via /reload.");
+            } else {
+              await sendMessage(botToken, cid, "❌ Failed to start — another instance may be active.");
+            }
+          } else {
+            // Already connected — update config if changed, then reload extensions
+            if (newConfig.botToken !== botToken || newConfig.chatId !== chatId) {
+              botToken = newConfig.botToken;
+              chatId = newConfig.chatId;
+            }
+            // ExtensionCommandContext has reload(); ExtensionContext does not, but the runtime
+            // object carries it in interactive mode. Cast to any to access it.
+            const reloadFn = (ctx as any).reload as (() => Promise<void>) | undefined;
+            if (reloadFn) {
+              await reloadFn();
+              await sendMessage(botToken, cid, "✅ Reload complete.");
+            } else {
+              await sendMessage(botToken, cid, "❌ Reload not available in this mode.");
+            }
+          }
+        } catch (err) {
+          logError("Reload failed:", err);
+          await sendMessage(botToken, cid, `❌ Reload failed: ${err}`);
+        }
+        break;
+      }
       default:
         await sendMessage(botToken, cid, "❓ Unknown command. Use /help for available commands.");
     }
@@ -1974,6 +2061,7 @@ export default function (pi: ExtensionAPI) {
       `<code>/continue</code> — Send continue prompt`,
       `<code>/queue</code> — Show message queue`,
       `<code>/next</code> — Skip current and run next queued item`,
+      `<code>/reload</code> — Reload extensions and re-check env`,
       `<code>/abort</code> — Abort current run`,
       `<code>/stop</code> — Abort and clear queue`,
       `<code>/help</code> — Show this help`,
@@ -2007,7 +2095,8 @@ export default function (pi: ExtensionAPI) {
     // Send text / markdown
     const strippedCleanText = stripTrailingEllipsis(cleanText);
     if (strippedCleanText.trim()) {
-      const chunks = renderTelegramMessage(strippedCleanText, { mode: "markdown" });
+      const footer = isConnected ? TELEGRAM_STATUS_FOOTER : "";
+      const chunks = renderTelegramMessage(strippedCleanText + footer, { mode: "markdown" });
       logInfo(`sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
       for (const [i, chunk] of chunks.entries()) {
         logInfo(`chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
@@ -2058,63 +2147,6 @@ export default function (pi: ExtensionAPI) {
     });
   }
 
-  // ─── Streaming Preview ─────────────────────────────────────────────
-
-  async function updatePreview(text: string, ctx: ExtensionContext): Promise<void> {
-    if (!chatId || !activeTurn || isFinalizing) return;
-    const preview = renderMarkdownPreviewText(text);
-    // Strip any trailing ellipsis LLM may have already added, before we add our own preview suffix
-    const strippedPreview = stripTrailingEllipsis(preview);
-    const suffix = "…";
-    const safePreview = strippedPreview.length > MAX_MESSAGE_LENGTH - suffix.length
-      ? strippedPreview.slice(0, MAX_MESSAGE_LENGTH - suffix.length) + suffix
-      : strippedPreview + suffix;
-    // Escape HTML so we can send preview with parse_mode: HTML — matches llblab behavior
-    // where preview and final both use HTML parse mode, avoiding parse_mode switch issues
-    const escapedPreview = escapeHtml(safePreview);
-    logInfo(`updatePreview: textLen=${text.length} previewLen=${preview.length} strippedLen=${strippedPreview.length} safeLen=${safePreview.length} endsWith="${safePreview.slice(-10)}"`);
-    if (previewMessageId) {
-      // Try edit (always HTML parse mode)
-      const ok = await editMessageText(botToken, chatId, previewMessageId, escapedPreview, { parse_mode: "HTML" });
-      if (!ok) {
-        // Message too old or changed, send new
-        const sent = await sendMessage(botToken, chatId, escapedPreview, { parse_mode: "HTML" });
-        if (sent) previewMessageId = sent.message_id;
-      }
-    } else {
-      const sent = await sendMessage(botToken, chatId, escapedPreview, { parse_mode: "HTML" });
-      if (sent) previewMessageId = sent.message_id;
-    }
-    previewText = text;
-  }
-
-  async function finalizePreview(finalText: string): Promise<void> {
-    if (!chatId || !previewMessageId) return;
-    const chunks = renderTelegramMessage(finalText, { mode: "markdown" });
-    logInfo(`finalizePreview: chunks=${chunks.length} previewMsgId=${previewMessageId}`);
-    if (chunks.length === 0) {
-      previewMessageId = undefined;
-      previewText = "";
-      return;
-    }
-    const first = chunks[0];
-    logInfo(`finalizePreview: firstChunk parseMode=${first.parseMode ?? "plain"} len=${first.text.length} textEnd="${first.text.slice(-30)}"`);
-    const ok = await editMessageText(botToken, chatId, previewMessageId, first.text, { parse_mode: first.parseMode });
-    logInfo(`finalizePreview: editResult=${ok}`);
-    if (!ok) {
-      // Edit failed — send new message, then delete stale preview
-      const sent = await sendMessage(botToken, chatId, first.text, { parse_mode: first.parseMode });
-      if (sent) {
-        await deleteMessage(botToken, chatId, previewMessageId).catch(() => false);
-      }
-    }
-    for (let i = 1; i < chunks.length; i++) {
-      await sendMessage(botToken, chatId, chunks[i].text, { parse_mode: chunks[i].parseMode });
-    }
-    previewMessageId = undefined;
-    previewText = "";
-  }
-
   // ─── Lifecycle ─────────────────────────────────────────────────────
 
   pi.on("session_start", async (_event, ctx) => {
@@ -2154,12 +2186,16 @@ export default function (pi: ExtensionAPI) {
 
     pollingController = new AbortController();
     pollingPromise = pollLoop(ctx);
+
+    // Notify Telegram that Pi session has connected
+    if (chatId) {
+      await sendMessage(botToken, chatId, "🟢 Pi session connected. Ready to receive tasks.");
+    }
   });
 
   pi.on("session_shutdown", async (_event, ctx) => {
     isShuttingDown = true;
     stopHeartbeat();
-    stopTyping();
     pollingController?.abort();
     if (pollingPromise) {
       await pollingPromise.catch(() => undefined);
@@ -2169,14 +2205,15 @@ export default function (pi: ExtensionAPI) {
     await releaseLock(botToken);
     isConnected = false;
     updateStatus(ctx, "disconnected");
+
+    // Notify Telegram that Pi session has disconnected
+    if (chatId) {
+      await sendMessage(botToken, chatId, "🔴 Pi session disconnected. Reconnect with /telegram-connect.");
+    }
   });
 
   pi.on("agent_start", async (_event, ctx) => {
     if (!activeTurn) return;
-    // Clear preview state for new turn
-    previewMessageId = undefined;
-    previewText = "";
-    startTyping(activeTurn.chatId);
 
     // Track turn source message for reactions
     currentTurnSourceMsgId = activeTurn.sourceMessageId;
@@ -2192,21 +2229,7 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  pi.on("message_update", async (event, ctx) => {
-    if (!activeTurn) return;
-    const msg = event.message;
-    logInfo(`message_update: role=${msg.role} contentTypes=${msg.content?.map((c: any) => c.type).join(",") ?? "none"}`);
-    if (msg.role !== "assistant") return;
-    const text = msg.content
-      ?.filter((c: any) => c.type === "text")
-      .map((c: any) => ("text" in c ? c.text : ""))
-      .join("")
-      ?? "";
-    // Only update preview if text grew meaningfully
-    if (text.length > previewText.length + 20 || text.endsWith("\n")) {
-      await updatePreview(text, ctx);
-    }
-  });
+  // Streaming preview removed — only send final result
 
   pi.on("tool_execution_start", async (event, ctx) => {
     if (!activeTurn || hasUsedToolThisTurn) return;
@@ -2219,7 +2242,6 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("agent_end", async (_event, ctx) => {
-    stopTyping();
     if (!activeTurn) return;
     isFinalizing = true;
 
@@ -2267,11 +2289,7 @@ export default function (pi: ExtensionAPI) {
       if (lastAssistantText.trim()) {
         const finalText = stripTrailingEllipsis(lastAssistantText);
         logInfo(`agent_end: ellipsisStrip originalEnd="${lastAssistantText.slice(-20)}" cleanedEnd="${finalText.slice(-20)}"`);
-        if (previewMessageId) {
-          await finalizePreview(finalText);
-        } else {
-          await sendReply(finalText, ctx);
-        }
+        await sendReply(finalText, ctx);
       }
 
       activeTurn = undefined;
@@ -2330,7 +2348,6 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => {
       isShuttingDown = true;
       stopHeartbeat();
-      stopTyping();
       pollingController?.abort();
       if (pollingPromise) {
         await pollingPromise.catch(() => undefined);
