@@ -2149,48 +2149,52 @@ export default function (pi: ExtensionAPI) {
 
   // ─── Lifecycle ─────────────────────────────────────────────────────
 
-  pi.on("session_start", async (_event, ctx) => {
+  pi.on("session_start", (_event, ctx) => {
     const sid = getSessionId(ctx);
     setLogSession(sid);
-    // Ensure temp dir exists
-    if (chatId) {
-      await prepareTempDir(botId, chatId, sid);
-    }
 
-    // Auto-connect: acquire lock with retry for stale locks
-    let lock = await acquireLock(botToken, chatId, allowedUserId);
-    if (!lock.acquired && lock.existing) {
-      // Wait briefly and retry once — the owner might be shutting down
-      await sleep(2000);
-      lock = await acquireLock(botToken, chatId, allowedUserId);
-    }
-    if (!lock.acquired && lock.existing) {
-      logInfo(
-        `Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
-      );
-      return;
-    }
+    // Fire connect sequence in background — don't block Pi main thread
+    // Telegram API calls (getMe, deleteWebhook, sendMessage) can be slow
+    (async () => {
+      // Ensure temp dir exists
+      if (chatId) {
+        await prepareTempDir(botId, chatId, sid);
+      }
 
-    // Resolve bot identity
-    const me = await getMe(botToken);
-    if (me) {
-      botUsername = me.username;
-      botNumericId = me.id;
-    }
+      // Auto-connect: acquire lock with retry for stale locks
+      let lock = await acquireLock(botToken, chatId, allowedUserId);
+      if (!lock.acquired && lock.existing) {
+        await sleep(2000);
+        lock = await acquireLock(botToken, chatId, allowedUserId);
+      }
+      if (!lock.acquired && lock.existing) {
+        logInfo(
+          `Bot ${botId} polling by live PID ${lock.existing.pid} (updated ${Math.round((Date.now() - lock.existing.ts) / 1000)}s ago). Run /telegram-connect to force take over.`,
+        );
+        return;
+      }
 
-    await deleteWebhook(botToken);
-    isShuttingDown = false;
-    isConnected = true;
-    updateStatus(ctx, "connected (auto)");
-    startHeartbeat();
+      // Resolve bot identity
+      const me = await getMe(botToken);
+      if (me) {
+        botUsername = me.username;
+        botNumericId = me.id;
+      }
 
-    pollingController = new AbortController();
-    pollingPromise = pollLoop(ctx);
+      await deleteWebhook(botToken);
+      isShuttingDown = false;
+      isConnected = true;
+      updateStatus(ctx, "connected (auto)");
+      startHeartbeat();
 
-    // Notify Telegram that Pi session has connected
-    if (chatId) {
-      await sendMessage(botToken, chatId, "🟢 Pi session connected. Ready to receive tasks.");
-    }
+      pollingController = new AbortController();
+      pollingPromise = pollLoop(ctx);
+
+      // Notify Telegram that Pi session has connected
+      if (chatId) {
+        await sendMessage(botToken, chatId, "🟢 Pi session connected. Ready to receive tasks.");
+      }
+    })().catch((err) => logError("session_start connect error:", err));
   });
 
   pi.on("session_shutdown", async (_event, ctx) => {
