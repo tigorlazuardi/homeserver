@@ -1369,6 +1369,7 @@ export default function (pi: ExtensionAPI) {
   let isConnected = false;
   let isShuttingDown = false;
   let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+  let typingTimer: ReturnType<typeof setInterval> | undefined;
 
   const queue = createQueue();
   let activeTurn: ActiveTurn | undefined;
@@ -1523,6 +1524,21 @@ export default function (pi: ExtensionAPI) {
     if (heartbeatTimer) {
       clearInterval(heartbeatTimer);
       heartbeatTimer = undefined;
+    }
+  }
+
+  function startTyping(chatId: number) {
+    if (typingTimer) clearInterval(typingTimer);
+    sendChatAction(botToken, chatId, "typing").catch(() => {});
+    typingTimer = setInterval(() => {
+      sendChatAction(botToken, chatId, "typing").catch(() => {});
+    }, 4000);
+  }
+
+  function stopTyping() {
+    if (typingTimer) {
+      clearInterval(typingTimer);
+      typingTimer = undefined;
     }
   }
 
@@ -2200,6 +2216,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_shutdown", async (_event, ctx) => {
     isShuttingDown = true;
     stopHeartbeat();
+    stopTyping();
     pollingController?.abort();
     if (pollingPromise) {
       await pollingPromise.catch(() => undefined);
@@ -2218,6 +2235,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("agent_start", async (_event, ctx) => {
     if (!activeTurn) return;
+    startTyping(activeTurn.chatId);
 
     // Track turn source message for reactions
     currentTurnSourceMsgId = activeTurn.sourceMessageId;
@@ -2246,6 +2264,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("agent_end", async (_event, ctx) => {
+    stopTyping();
     if (!activeTurn) return;
     isFinalizing = true;
 
@@ -2352,6 +2371,7 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => {
       isShuttingDown = true;
       stopHeartbeat();
+      stopTyping();
       pollingController?.abort();
       if (pollingPromise) {
         await pollingPromise.catch(() => undefined);
