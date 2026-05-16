@@ -1383,6 +1383,10 @@ export default function (pi: ExtensionAPI) {
   let hasUsedToolThisTurn = false;
   let isSteering = false;
 
+  // ─── Message Text Tracking ─────────────────────────────────────────
+
+  const assistantTexts: string[] = [];
+
   // ─── Status Footer ───────────────────────────────────────────────────
 
   const TELEGRAM_STATUS_FOOTER = "\n\n🟢 <i>Telegram</i>";
@@ -2233,9 +2237,33 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
+  pi.on("message_end", async (event, ctx) => {
+    if (event.message.role !== "assistant") return;
+    const content = event.message.content;
+    let text = "";
+    if (typeof content === "string") {
+      text = content;
+    } else if (Array.isArray(content)) {
+      text = content
+        .map((c: any) => {
+          if (c.type === "text" && c.text) return c.text;
+          if (c.type === "text" && typeof c.content === "string") return c.content;
+          return "";
+        })
+        .join("");
+    } else if (content && typeof content.text === "string") {
+      text = content.text;
+    }
+    if (text.trim()) {
+      assistantTexts.push(text);
+      logInfo(`message_end: captured textLen=${text.length}`);
+    }
+  });
+
   pi.on("agent_start", async (_event, ctx) => {
     if (!activeTurn) return;
     startTyping(activeTurn.chatId);
+    assistantTexts.length = 0;
 
     // Track turn source message for reactions
     currentTurnSourceMsgId = activeTurn.sourceMessageId;
@@ -2263,7 +2291,7 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  pi.on("agent_end", async (_event, ctx) => {
+  pi.on("agent_end", async (event, ctx) => {
     stopTyping();
     if (!activeTurn) return;
     isFinalizing = true;
@@ -2282,37 +2310,76 @@ export default function (pi: ExtensionAPI) {
         currentTurnSourceMsgId = undefined;
       }
 
-      // Find last assistant message
-      const entries = ctx.sessionManager.getEntries();
+      // Extract text from multiple sources
       let lastAssistantText = "";
-      for (let i = entries.length - 1; i >= 0; i--) {
-        const e = entries[i];
-        if (e.role === "assistant") {
-          // Try multiple content shapes for robust text extraction
-          const content = e.content;
-          if (typeof content === "string") {
-            lastAssistantText = content;
-          } else if (Array.isArray(content)) {
-            lastAssistantText = content
-              .map((c: any) => {
-                if (c.type === "text" && c.text) return c.text;
-                if (c.type === "text" && typeof c.content === "string") return c.content;
-                return "";
-              })
-              .join("");
-          } else if (content && typeof content.text === "string") {
-            lastAssistantText = content.text;
+      let source = "none";
+
+      // 1. message_end tracking (most reliable)
+      if (assistantTexts.length > 0) {
+        lastAssistantText = assistantTexts[assistantTexts.length - 1];
+        source = "message_end";
+      }
+
+      // 2. agent_end event.messages
+      if (!lastAssistantText.trim() && event.messages?.length) {
+        for (let i = event.messages.length - 1; i >= 0; i--) {
+          const msg = event.messages[i];
+          if (msg.role === "assistant") {
+            const content = msg.content;
+            if (typeof content === "string") {
+              lastAssistantText = content;
+            } else if (Array.isArray(content)) {
+              lastAssistantText = content
+                .map((c: any) => {
+                  if (c.type === "text" && c.text) return c.text;
+                  if (c.type === "text" && typeof c.content === "string") return c.content;
+                  return "";
+                })
+                .join("");
+            } else if (content && typeof content.text === "string") {
+              lastAssistantText = content.text;
+            }
+            source = "event.messages";
+            break;
           }
-          break;
         }
       }
 
-      logInfo(`agent_end: entries=${entries.length} textLen=${lastAssistantText.length}`);
+      // 3. session entries fallback
+      if (!lastAssistantText.trim()) {
+        const entries = ctx.sessionManager.getEntries();
+        for (let i = entries.length - 1; i >= 0; i--) {
+          const e = entries[i];
+          if (e.role === "assistant") {
+            const content = e.content;
+            if (typeof content === "string") {
+              lastAssistantText = content;
+            } else if (Array.isArray(content)) {
+              lastAssistantText = content
+                .map((c: any) => {
+                  if (c.type === "text" && c.text) return c.text;
+                  if (c.type === "text" && typeof c.content === "string") return c.content;
+                  return "";
+                })
+                .join("");
+            } else if (content && typeof content.text === "string") {
+              lastAssistantText = content.text;
+            }
+            source = "entries";
+            break;
+          }
+        }
+        logInfo(`agent_end: entries=${entries.length} textLen=${lastAssistantText.length} source=${source}`);
+      } else {
+        logInfo(`agent_end: textLen=${lastAssistantText.length} source=${source}`);
+      }
 
       if (lastAssistantText.trim()) {
         const finalText = stripTrailingEllipsis(lastAssistantText);
-        logInfo(`agent_end: ellipsisStrip originalEnd="${lastAssistantText.slice(-20)}" cleanedEnd="${finalText.slice(-20)}"`);
+        logInfo(`agent_end: sending reply textLen=${finalText.length}`);
         await sendReply(finalText, ctx);
+      } else {
+        logInfo("agent_end: no assistant text found, skipping reply");
       }
 
       activeTurn = undefined;
@@ -2320,6 +2387,8 @@ export default function (pi: ExtensionAPI) {
 
       // Dispatch next queued item after a short delay
       setTimeout(() => dispatchNext(ctx), 500);
+    } catch (err) {
+      logError("agent_end error:", err);
     } finally {
       isFinalizing = false;
     }
