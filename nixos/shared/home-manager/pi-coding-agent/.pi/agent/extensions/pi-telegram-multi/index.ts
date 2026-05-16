@@ -1387,10 +1387,6 @@ export default function (pi: ExtensionAPI) {
 
   const assistantTexts: string[] = [];
 
-  // ─── Status Footer ───────────────────────────────────────────────────
-
-  const TELEGRAM_STATUS_FOOTER = "\n\n🟢 <i>Telegram</i>";
-
   // ─── Helpers ───────────────────────────────────────────────────────
 
   function updateStatus(_ctx: ExtensionContext, msg?: string) {
@@ -1446,6 +1442,9 @@ export default function (pi: ExtensionAPI) {
     isShuttingDown = false;
     isConnected = true;
     updateStatus(ctx, "connected (reload)");
+    if (ctx.hasUI) {
+      ctx.ui.setStatus("telegram", "🟢 Telegram");
+    }
     startHeartbeat();
     pollingController = new AbortController();
     pollingPromise = pollLoop(ctx);
@@ -2115,8 +2114,7 @@ export default function (pi: ExtensionAPI) {
     // Send text / markdown
     const strippedCleanText = stripTrailingEllipsis(cleanText);
     if (strippedCleanText.trim()) {
-      const footer = isConnected ? TELEGRAM_STATUS_FOOTER : "";
-      const chunks = renderTelegramMessage(strippedCleanText + footer, { mode: "markdown" });
+      const chunks = renderTelegramMessage(strippedCleanText, { mode: "markdown" });
       logInfo(`sendReply: chunks=${chunks.length} textLen=${cleanText.length} last50="${cleanText.slice(-50)}"`);
       for (const [i, chunk] of chunks.entries()) {
         logInfo(`chunk[${i}]: len=${chunk.text.length} parseMode=${chunk.parseMode ?? "plain"} last30="${chunk.text.slice(-30)}"`);
@@ -2230,6 +2228,9 @@ export default function (pi: ExtensionAPI) {
     await releaseLock(botToken);
     isConnected = false;
     updateStatus(ctx, "disconnected");
+    if (ctx.hasUI) {
+      ctx.ui.setStatus("telegram", undefined);
+    }
 
     // Notify Telegram that Pi session has disconnected
     if (chatId) {
@@ -2428,6 +2429,9 @@ export default function (pi: ExtensionAPI) {
       isShuttingDown = false;
       isConnected = true;
       updateStatus(ctx, "connected");
+      if (ctx.hasUI) {
+        ctx.ui.setStatus("telegram", "🟢 Telegram");
+      }
       startHeartbeat();
       pollingController = new AbortController();
       pollingPromise = pollLoop(ctx);
@@ -2451,6 +2455,9 @@ export default function (pi: ExtensionAPI) {
       isConnected = false;
       isShuttingDown = false;
       updateStatus(ctx, "disconnected");
+      if (ctx.hasUI) {
+        ctx.ui.setStatus("telegram", undefined);
+      }
       ctx.ui.notify("Telegram disconnected", "info");
     },
   });
