@@ -228,7 +228,7 @@ function guessImageMimeType(filePath: string): string | undefined {
 
 const MAX_IMAGE_FILE_BYTES = 4.5 * 1024 * 1024;
 
-async function imagePathToBase64Content(path: string): Promise<{ type: "image"; source: { type: "base64"; media_type: string; data: string } } | undefined> {
+async function imagePathToBase64Content(path: string): Promise<{ type: "image"; data: string; mimeType: string } | undefined> {
   try {
     const fileStat = await stat(path);
     logInfo(`imagePathToBase64Content: path=${path} size=${fileStat.size} bytes`);
@@ -240,7 +240,7 @@ async function imagePathToBase64Content(path: string): Promise<{ type: "image"; 
     const mimeType = guessImageMimeType(path) ?? "image/jpeg";
     const base64 = Buffer.from(buffer).toString("base64");
     logInfo(`imagePathToBase64Content: base64Len=${base64.length} mimeType=${mimeType}`);
-    return { type: "image", source: { type: "base64", media_type: mimeType, data: base64 } };
+    return { type: "image", data: base64, mimeType };
   } catch (err) {
     logError("Failed to read image file:", path, err);
     return undefined;
@@ -1789,7 +1789,7 @@ export default function (pi: ExtensionAPI) {
       // Build payload same as dispatchNext
       const contentParts: Array<
         | { type: "text"; text: string }
-        | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+        | { type: "image"; data: string; mimeType: string }
       > = [];
       if (item.text?.trim()) contentParts.push({ type: "text", text: item.text.trim() });
       if (item.images?.length) {
@@ -2053,7 +2053,7 @@ export default function (pi: ExtensionAPI) {
 
       const contentParts: Array<
         | { type: "text"; text: string }
-        | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+        | { type: "image"; data: string; mimeType: string }
       > = [];
 
       if (item.text?.trim()) {
