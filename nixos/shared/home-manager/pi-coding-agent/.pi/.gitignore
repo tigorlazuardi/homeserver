@@ -15,3 +15,6 @@ telebridge.json
 locks.json
 telegram.json
 telegram-locks.json
+
+.env
+

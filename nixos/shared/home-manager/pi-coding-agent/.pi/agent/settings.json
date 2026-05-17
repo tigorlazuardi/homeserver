@@ -5,7 +5,12 @@
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-rtk-optimizer",
-    "npm:@pi-unipi/unipi",
+    {
+      "source": "npm:@pi-unipi/unipi",
+      "extensions": [
+        "+node_modules/@pi-unipi/footer/src/index.ts"
+      ]
+    },
     {
       "source": "git:github.com/rytswd/pi-agent-extensions",
       "extensions": [
@@ -17,7 +22,9 @@
         "-statusline/index.ts",
         "-stash/index.ts"
       ]
-    }
+    },
+    "npm:pi-hashline-readmap",
+    "npm:@dreki-gg/pi-context7"
   ],
   "editorPaddingX": 1,
   "doubleEscapeAction": "tree",
@@ -31,6 +38,57 @@
       "groups": {
         "overview": {
           "show": true
+        }
+      }
+    },
+    "footer": {
+      "enabled": true,
+      "preset": "default",
+      "separator": "powerline",
+      "iconStyle": "nerd",
+      "zoneSeparator": "·",
+      "showFullLabels": false,
+      "groups": {
+        "core": {
+          "show": true,
+          "segments": {
+            "model": true,
+            "api_state": true,
+            "tool_count": true,
+            "git": true
+          }
+        },
+        "compactor": {
+          "show": true,
+          "segments": {}
+        },
+        "memory": {
+          "show": true,
+          "segments": {}
+        },
+        "mcp": {
+          "show": true,
+          "segments": {}
+        },
+        "ralph": {
+          "show": true,
+          "segments": {}
+        },
+        "workflow": {
+          "show": true,
+          "segments": {}
+        },
+        "kanboard": {
+          "show": true,
+          "segments": {}
+        },
+        "notify": {
+          "show": false,
+          "segments": {}
+        },
+        "status_ext": {
+          "show": true,
+          "segments": {}
         }
       }
     }
