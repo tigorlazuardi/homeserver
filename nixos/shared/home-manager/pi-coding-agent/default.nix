@@ -4,6 +4,9 @@
   inputs,
   ...
 }:
+let
+  playwrightPkgs = inputs.playwright-web.packages.${pkgs.stdenv.hostPlatform.system};
+in
 {
   home.packages =
     with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
@@ -16,6 +19,10 @@
       nodejs
       zellij # Keep session alive
       ffmpeg
+    ])
+    ++ (with playwrightPkgs; [
+      playwright-test
+      playwright-driver
     ]);
 
   home.file.".pi".source =
@@ -43,4 +50,9 @@
     # Go binaries
     fish_add_path ${config.home.homeDirectory}/go/bin
   '';
+
+  home.sessionVariables = {
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
+    PLAYWRIGHT_BROWSERS_PATH = "${playwrightPkgs.playwright-driver.browsers}";
+  };
 }

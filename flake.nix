@@ -25,6 +25,7 @@
     };
     opencode.url = "github:anomalyco/opencode";
     llm-agents.url = "github:numtide/llm-agents.nix";
+    playwright-web.url = "github:pietdevries94/playwright-web-flake";
   };
   outputs = inputs: {
     nixosConfigurations = import ./nixos inputs;
