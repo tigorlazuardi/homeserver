@@ -1784,7 +1784,7 @@ export default function (pi: ExtensionAPI) {
       currentTurnSourceMsgId = msg.message_id;
       hasUsedToolThisTurn = false;
 
-      await setMessageReaction(botToken, cid, msg.message_id, "🛞");
+      try { await setMessageReaction(botToken, cid, msg.message_id, "🛞"); } catch {}
 
       // Build payload same as dispatchNext
       const contentParts: Array<
@@ -2332,7 +2332,7 @@ export default function (pi: ExtensionAPI) {
     } else if (currentTurnSourceMsgId && currentTurnSourceMsgId > 0) {
       // Normal new turn: 👀 eyes — bot received, LLM thinking
       logInfo(`agent_start: normal turn sourceMsgId=${currentTurnSourceMsgId}`);
-      await setMessageReaction(botToken, activeTurn.chatId, currentTurnSourceMsgId, "👀");
+      try { await setMessageReaction(botToken, activeTurn.chatId, currentTurnSourceMsgId, "👀"); } catch {}
     }
   });
 
@@ -2344,7 +2344,7 @@ export default function (pi: ExtensionAPI) {
     const msgId = isSteering ? currentTurnSourceMsgId : activeTurn.sourceMessageId;
     if (msgId && msgId > 0) {
       logInfo(`tool_execution_start: first tool, sourceMsgId=${msgId}`);
-      await setMessageReaction(botToken, activeTurn.chatId, msgId, "⚙️");
+      try { await setMessageReaction(botToken, activeTurn.chatId, msgId, "⚙️"); } catch {}
     }
   });
 
@@ -2358,7 +2358,11 @@ export default function (pi: ExtensionAPI) {
       const doneMsgId = isSteering ? currentTurnSourceMsgId : activeTurn.sourceMessageId;
       if (doneMsgId && doneMsgId > 0) {
         logInfo(`agent_end: done sourceMsgId=${doneMsgId} steering=${isSteering}`);
-        await setMessageReaction(botToken, activeTurn.chatId, doneMsgId, "✅");
+        try {
+          await setMessageReaction(botToken, activeTurn.chatId, doneMsgId, "👍");
+        } catch {
+          // ignore reaction errors
+        }
       }
 
       // Reset steering state for next turn
