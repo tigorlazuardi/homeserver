@@ -30,12 +30,12 @@ async function isFfmpegAvailable(): Promise<boolean> {
   }
 }
 
-async function resizeImageWithFfmpeg(inputPath: string, outputPath: string): Promise<boolean> {
+async function resizeImageWithFfmpeg(inputPath: string, outputPath: string, quality = 2): Promise<boolean> {
   try {
     await execFileAsync("ffmpeg", [
       "-i", inputPath,
       "-vf", "scale=2000:2000:force_original_aspect_ratio=decrease",
-      "-q:v", "2",
+      "-q:v", String(quality),
       "-y",
       outputPath,
     ], { timeout: 30000 });
@@ -43,6 +43,64 @@ async function resizeImageWithFfmpeg(inputPath: string, outputPath: string): Pro
   } catch {
     return false;
   }
+}
+
+async function processImageFile(inputPath: string): Promise<string | undefined> {
+  // Check original size first
+  let originalSize = Infinity;
+  try {
+    originalSize = (await stat(inputPath)).size;
+  } catch {
+    return undefined;
+  }
+
+  const ffmpegOk = await isFfmpegAvailable();
+  if (!ffmpegOk) {
+    if (originalSize <= MAX_IMAGE_FILE_BYTES) return inputPath;
+    logError("Image too large and ffmpeg unavailable:", inputPath, `${(originalSize / 1024 / 1024).toFixed(1)}MB`);
+    return undefined;
+  }
+
+  let currentPath = inputPath;
+  let lastGoodPath: string | undefined;
+
+  for (const quality of [2, 4, 6, 8]) {
+    const outPath = `${inputPath}.resized.q${quality}.jpg`;
+    const ok = await resizeImageWithFfmpeg(currentPath, outPath, quality);
+    if (!ok) continue;
+
+    let size = Infinity;
+    try {
+      size = (await stat(outPath)).size;
+    } catch {
+      continue;
+    }
+    logInfo(`processImageFile: quality=${quality} size=${size} bytes (${(size / 1024 / 1024).toFixed(1)}MB)`);
+
+    if (size <= MAX_IMAGE_FILE_BYTES) {
+      lastGoodPath = outPath;
+      break;
+    }
+    currentPath = outPath;
+  }
+
+  if (lastGoodPath) {
+    // Clean up original and any failed intermediates
+    try { await unlink(inputPath); } catch {}
+    for (const quality of [2, 4, 6, 8]) {
+      const p = `${inputPath}.resized.q${quality}.jpg`;
+      if (p !== lastGoodPath) {
+        try { await unlink(p); } catch {}
+      }
+    }
+    return lastGoodPath;
+  }
+
+  logError("Failed to compress image under limit:", inputPath);
+  for (const quality of [2, 4, 6, 8]) {
+    try { await unlink(`${inputPath}.resized.q${quality}.jpg`); } catch {}
+  }
+  return undefined;
 }
 
 // ─── File Logger ─────────────────────────────────────────────────────
@@ -1629,26 +1687,14 @@ export default function (pi: ExtensionAPI) {
 
     // Photos
     if (msg.photo?.length) {
-      // Try to find best photo: largest that fits within 2000x2000, or largest overall
-      const bestPhoto = msg.photo
-        .filter((p) => p.width && p.height)
-        .sort((a, b) => (b.file_size ?? 0) - (a.file_size ?? 0))
-        .find((p) => (p.width ?? 9999) <= 2000 && (p.height ?? 9999) <= 2000)
-        ?? msg.photo.reduce((a, b) => ((a.file_size ?? 0) > (b.file_size ?? 0) ? a : b));
-
-      let path = await downloadTelegramFile(botToken, botId, cid, sid, bestPhoto.file_id, "photo.jpg");
+      // Always pick the largest photo by file_size for best quality
+      const bestPhoto = msg.photo.reduce((a, b) => ((a.file_size ?? 0) > (b.file_size ?? 0) ? a : b));
+      const path = await downloadTelegramFile(botToken, botId, cid, sid, bestPhoto.file_id, "photo.jpg");
       if (path) {
-        // Try ffmpeg resize if available
-        const ffmpegOk = await isFfmpegAvailable();
-        if (ffmpegOk) {
-          const resizedPath = `${path}.resized.jpg`;
-          const resized = await resizeImageWithFfmpeg(path, resizedPath);
-          if (resized) {
-            try { await unlink(path); } catch {}
-            path = resizedPath;
-          }
+        const processed = await processImageFile(path);
+        if (processed) {
+          images.push({ type: "image", source: { type: "path", path: processed } });
         }
-        images.push({ type: "image", source: { type: "path", path } });
       }
     }
 
@@ -1663,11 +1709,21 @@ export default function (pi: ExtensionAPI) {
 
     // Document
     if (msg.document) {
+      const isImage = msg.document.mime_type?.startsWith("image/");
       const path = await downloadTelegramFile(
         botToken, botId, cid, sid, msg.document.file_id,
         msg.document.file_name ?? "document",
       );
-      if (path) files.push(path);
+      if (path) {
+        if (isImage) {
+          const processed = await processImageFile(path);
+          if (processed) {
+            images.push({ type: "image", source: { type: "path", path: processed } });
+          }
+        } else {
+          files.push(path);
+        }
+      }
     }
 
     // Voice / Audio
