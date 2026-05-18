@@ -1660,21 +1660,24 @@ export default function (pi: ExtensionAPI) {
     if (chatId && cid !== chatId) return;
     if (allowedUserId && userId !== allowedUserId) return;
 
-    // Group chat: require [prompt] prefix to avoid noise
+    // Group chat: require [prompt] prefix to avoid noise (commands bypass)
     const isGroupChat = chatId !== undefined && chatId < 0;
     if (isGroupChat) {
       const text = msg.text ?? msg.caption ?? "";
-      const promptPrefix = "[prompt]";
       const trimmed = text.trimStart();
-      if (!trimmed.toLowerCase().startsWith(promptPrefix)) {
-        // Silently discard non-prompt messages in groups
-        return;
+      // Slash commands always allowed in groups
+      if (!trimmed.startsWith("/")) {
+        const promptPrefix = "[prompt]";
+        if (!trimmed.toLowerCase().startsWith(promptPrefix)) {
+          // Silently discard non-prompt messages in groups
+          return;
+        }
+        // Strip [prompt] prefix (preserve original spacing after it)
+        const afterPrefix = trimmed.slice(promptPrefix.length);
+        const stripped = afterPrefix.trimStart();
+        if (msg.text) msg.text = stripped;
+        if (msg.caption) msg.caption = stripped;
       }
-      // Strip [prompt] prefix (preserve original spacing after it)
-      const afterPrefix = trimmed.slice(promptPrefix.length);
-      const stripped = afterPrefix.trimStart();
-      if (msg.text) msg.text = stripped;
-      if (msg.caption) msg.caption = stripped;
     }
 
     // Slash commands from Telegram
