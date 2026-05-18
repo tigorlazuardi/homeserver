@@ -1643,7 +1643,11 @@ export default function (pi: ExtensionAPI) {
           { command: "reload", description: "Reload extensions and re-check env" },
           { command: "help", description: "Show available commands" },
         ]);
-        await sendMessage(botToken, cid, "✅ Connected to Pi session. Send messages or files to interact.");
+        const isGroup = cid < 0;
+        const connectMsg = isGroup
+          ? "✅ Connected to Pi session. Prefix messages with `[prompt]` to interact."
+          : "✅ Connected to Pi session. Send messages or files to interact.";
+        await sendMessage(botToken, cid, connectMsg);
       } else if (cid === chatId) {
         await sendMessage(botToken, cid, "ℹ️ Already connected to this Pi session.");
       } else {
@@ -1655,6 +1659,23 @@ export default function (pi: ExtensionAPI) {
     // Authorization
     if (chatId && cid !== chatId) return;
     if (allowedUserId && userId !== allowedUserId) return;
+
+    // Group chat: require [prompt] prefix to avoid noise
+    const isGroupChat = chatId !== undefined && chatId < 0;
+    if (isGroupChat) {
+      const text = msg.text ?? msg.caption ?? "";
+      const promptPrefix = "[prompt]";
+      const trimmed = text.trimStart();
+      if (!trimmed.toLowerCase().startsWith(promptPrefix)) {
+        // Silently discard non-prompt messages in groups
+        return;
+      }
+      // Strip [prompt] prefix (preserve original spacing after it)
+      const afterPrefix = trimmed.slice(promptPrefix.length);
+      const stripped = afterPrefix.trimStart();
+      if (msg.text) msg.text = stripped;
+      if (msg.caption) msg.caption = stripped;
+    }
 
     // Slash commands from Telegram
     if (msg.text?.startsWith("/")) {
@@ -2126,6 +2147,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   async function sendHelp(cid: number): Promise<void> {
+    const isGroup = chatId !== undefined && chatId < 0;
     const lines = [
       `<b>Telegram Commands</b>`,
       ``,
@@ -2141,7 +2163,9 @@ export default function (pi: ExtensionAPI) {
       `<code>/stop</code> — Abort and clear queue`,
       `<code>/help</code> — Show this help`,
       ``,
-      `Send messages or files to interact with Pi.`,
+      isGroup
+        ? `Prefix messages with <code>[prompt]</code> to interact in this group.`
+        : `Send messages or files to interact with Pi.`,
       `Reactions: 👍⚡❤ promote, 👎👻💔 remove.`,
     ];
     await sendMessage(botToken, cid, lines.join("\n"), { parse_mode: "HTML" });
