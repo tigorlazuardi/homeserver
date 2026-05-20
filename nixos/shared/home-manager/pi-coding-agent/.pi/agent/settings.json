@@ -24,7 +24,8 @@
       ]
     },
     "npm:pi-hashline-readmap",
-    "npm:@dreki-gg/pi-context7"
+    "npm:@dreki-gg/pi-context7",
+    "npm:pi-lens"
   ],
   "editorPaddingX": 1,
   "doubleEscapeAction": "tree",
