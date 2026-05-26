@@ -27,7 +27,7 @@ in
       export VIKUNJA_API_TOKEN=''$(cat ${config.sops.secrets."opencode/VIKUNJA_API_TOKEN".path})
       ${opencode}/bin/opencode "$@"
     '')
-    (pkgs.writeShellScriptBin "claude-screenshot" ''
+    (pkgs.writeShellScriptBin "opencode-screenshot" ''
       # Create screenshots directory
       SCREENSHOT_DIR="/tmp/claude-screenshots"
       mkdir -p "$SCREENSHOT_DIR"

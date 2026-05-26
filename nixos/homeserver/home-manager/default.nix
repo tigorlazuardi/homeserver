@@ -6,6 +6,7 @@
     ../../shared/home-manager/bun.nix
     # ../../shared/home-manager/zed
     ../../shared/home-manager/pi-coding-agent
+    ../../environments/claude-code/home-manager
 
     ../../environments/open-code/home-manager
   ];

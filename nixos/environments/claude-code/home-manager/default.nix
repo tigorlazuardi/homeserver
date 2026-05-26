@@ -1,56 +1,65 @@
-{ pkgs, osConfig, ... }:
 {
-  home.packages = with pkgs; [
-    claude-code
+  inputs,
+  pkgs,
+  osConfig,
+  ...
+}:
+{
+  home.packages =
+    with pkgs;
+    [
 
-    # Tools commonly used by claude-code
-    ripgrep # Fast search (rg)
-    fd # Fast find
-    git # Version control
-    gh # GitHub CLI
-    jq # JSON processor
-    curl # HTTP client
-    wget # File downloader
-    tree # Directory listing
-    nodejs # For npm/node projects
-    python3 # For Python projects
-    gnumake # Build tool
-    cmake # Build system
-    gcc # C/C++ compiler
-    nixfmt # Nix formatter
+      # Tools commonly used by claude-code
+      ripgrep # Fast search (rg)
+      fd # Fast find
+      git # Version control
+      gh # GitHub CLI
+      jq # JSON processor
+      curl # HTTP client
+      wget # File downloader
+      tree # Directory listing
+      nodejs # For npm/node projects
+      python3 # For Python projects
+      gnumake # Build tool
+      cmake # Build system
+      gcc # C/C++ compiler
+      nixfmt # Nix formatter
 
-    (pkgs.writeShellScriptBin "claude-screenshot" ''
-      # Create screenshots directory
-      SCREENSHOT_DIR="/tmp/claude-screenshots"
-      mkdir -p "$SCREENSHOT_DIR"
+      (pkgs.writeShellScriptBin "claude-screenshot" ''
+        # Create screenshots directory
+        SCREENSHOT_DIR="/tmp/claude-screenshots"
+        mkdir -p "$SCREENSHOT_DIR"
 
-      # Generate filename with date and time
-      FILENAME="$(date +%Y%m%d_%H%M%S).png"
-      FILEPATH="$SCREENSHOT_DIR/$FILENAME"
+        # Generate filename with date and time
+        FILENAME="$(date +%Y%m%d_%H%M%S).png"
+        FILEPATH="$SCREENSHOT_DIR/$FILENAME"
 
-      # Select region with spectacle, opens editor after capture
-      ${pkgs.kdePackages.spectacle}/bin/spectacle -n -r -o "$FILEPATH"
+        # Select region with spectacle, opens editor after capture
+        ${pkgs.kdePackages.spectacle}/bin/spectacle -n -r -o "$FILEPATH"
 
-      # Check if screenshot was created successfully
-      if [ -f "$FILEPATH" ]; then
-        # Copy filepath to clipboard
-        echo -n "$FILEPATH" | ${pkgs.wl-clipboard}/bin/wl-copy
+        # Check if screenshot was created successfully
+        if [ -f "$FILEPATH" ]; then
+          # Copy filepath to clipboard
+          echo -n "$FILEPATH" | ${pkgs.wl-clipboard}/bin/wl-copy
 
-        # Send notification with preview
-        ${pkgs.libnotify}/bin/notify-send \
-          --app-name="Claude Screenshot" \
-          --icon="$FILEPATH" \
-          "Screenshot saved" \
-          "$FILEPATH"
-      else
-        ${pkgs.libnotify}/bin/notify-send \
-          --app-name="Claude Screenshot" \
-          --urgency=critical \
-          "Screenshot cancelled" \
-          "No screenshot was saved"
-      fi
-    '')
-  ];
+          # Send notification with preview
+          ${pkgs.libnotify}/bin/notify-send \
+            --app-name="Claude Screenshot" \
+            --icon="$FILEPATH" \
+            "Screenshot saved" \
+            "$FILEPATH"
+        else
+          ${pkgs.libnotify}/bin/notify-send \
+            --app-name="Claude Screenshot" \
+            --urgency=critical \
+            "Screenshot cancelled" \
+            "No screenshot was saved"
+        fi
+      '')
+    ]
+    ++ (with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
+      claude-code
+    ]);
 
   programs.fish = {
     enable = true;
