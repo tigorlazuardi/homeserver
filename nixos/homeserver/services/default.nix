@@ -27,6 +27,7 @@
     ./plane.nix
     # ./sukhoi-booth9.nix
     ./searxng.nix
+    ./wallrus.nix
     # ./erpnext.nix
 
   ];
