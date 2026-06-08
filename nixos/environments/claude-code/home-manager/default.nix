@@ -64,7 +64,7 @@
   programs.fish = {
     enable = true;
     inherit (osConfig.programs.fish) package; # use nixos
-    shellAliases.clauded = "claude --dangerously-skip-permissions";
+    shellAliases.clauded = "claude --permission-mode=bypassPermissions";
   };
 
   # Remove Claude's self-promotional lines from commit messages.
