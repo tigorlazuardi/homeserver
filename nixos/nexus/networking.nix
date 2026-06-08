@@ -6,7 +6,7 @@
     hostName = "nexus";
     enableIPv6 = false;
     hosts = {
-      "192.168.100.50" = [ "homeserver" ];
+      "192.168.100.5" = [ "homeserver" ];
     };
     firewall.allowedTCPPorts = [ 5173 ]; # vite
   };

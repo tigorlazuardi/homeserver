@@ -10,7 +10,7 @@
 }:
 let
   # Server IP for DNS rewrites
-  serverIP = "192.168.100.50";
+  serverIP = "192.168.100.5";
 
   # AdGuard Home initial config
   adguardConfig = {
@@ -30,7 +30,7 @@ let
     theme = "auto";
     dns = {
       bind_hosts = [
-        "192.168.100.50"
+        "192.168.100.5"
         "10.0.0.1"
       ];
       port = 53;
@@ -284,11 +284,11 @@ in
   systemd.services."podman-${containerName}" = {
     preStart = ''
       mkdir -p ${dataDir}/work ${dataDir}/conf
-      if [ ! -f "${dataDir}/conf/AdGuardHome.yaml" ]; then
+      # if [ ! -f "${dataDir}/conf/AdGuardHome.yaml" ]; then
         echo "Copying initial AdGuard Home config..."
         cp ${configFile} ${dataDir}/conf/AdGuardHome.yaml
         chmod 644 ${dataDir}/conf/AdGuardHome.yaml
-      fi
+      # fi
     '';
     serviceConfig = {
       Restart = lib.mkForce "always";
@@ -301,6 +301,13 @@ in
     tinyauth.enable = true;
     locations."/".proxyPass = "http://localhost:3000";
   };
+
+  networking.interfaces.eth0.ipv4.addresses = [
+    {
+      address = "192.168.100.5";
+      prefixLength = 24;
+    }
+  ];
 
   # Open firewall for DNS and web UI
   networking.firewall = {
