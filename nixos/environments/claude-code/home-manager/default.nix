@@ -24,6 +24,7 @@
       cmake # Build system
       gcc # C/C++ compiler
       nixfmt # Nix formatter
+      chezmoi
 
       (pkgs.writeShellScriptBin "claude-screenshot" ''
         # Create screenshots directory
